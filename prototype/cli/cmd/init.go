@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -14,12 +18,10 @@ const (
 	colorCyan   = "\033[36m"
 	colorYellow = "\033[33m"
 	colorBold   = "\033[1m"
+	colorRed    = "\033[31m"
 )
 
-type agent struct {
-	name string
-	task string
-}
+var engineURL = "http://localhost:7777"
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -31,44 +33,112 @@ func init() {
 	rootCmd.AddCommand(initCmd)
 }
 
+type initRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Languages   string `json:"languages"`
+	TeamSize    string `json:"team_size"`
+}
+
+type taskResponse struct {
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	AgentType string `json:"agent_type"`
+	Status    string `json:"status"`
+	Priority  int    `json:"priority"`
+}
+
 func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("\n%s%s🚀 Mitran Init — Let's set up your AI engineering team%s\n\n", colorBold, colorCyan, colorReset)
 
-	company := prompt("What does your company do?")
+	name := prompt("Company/project name?")
+	description := prompt("What does your company do?")
 	engineers := prompt("How many engineers?")
 	stack := prompt("What languages/frameworks do you use?")
-	github := promptYN("Do you use GitHub?")
-	slack := promptYN("Do you use Slack?")
 
-	agents := buildPlan(company, engineers, stack, github, slack)
+	fmt.Printf("\n%s%s📡 Sending to Mitran Engine (%s)...%s\n", colorBold, colorCyan, engineURL, colorReset)
 
-	fmt.Printf("\n%s%s📋 Task Plan:%s\n\n", colorBold, colorYellow, colorReset)
-	for i, a := range agents {
-		fmt.Printf("  %s%d. %-12s%s → %s\n", colorCyan, i+1, a.name, colorReset, a.task)
+	// Call the engine API
+	payload := initRequest{
+		Name:        name,
+		Description: description,
+		Languages:   stack,
+		TeamSize:    engineers,
 	}
-	fmt.Println()
+	body, _ := json.Marshal(payload)
 
-	approved := promptYN("Approve this plan?")
-	if !approved {
-		fmt.Printf("\n%sPlan rejected. Run 'mitran init' again when ready.%s\n", colorYellow, colorReset)
+	resp, err := http.Post(engineURL+"/api/v1/init", "application/json", bytes.NewReader(body))
+	if err != nil {
+		fmt.Printf("\n%s%s✗ Cannot reach engine at %s%s\n", colorBold, colorRed, engineURL, colorReset)
+		fmt.Printf("  Start the engine first: cd prototype/server && go run .\n\n")
+		return nil
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 && resp.StatusCode != 201 {
+		fmt.Printf("\n%s%s✗ Engine error (%d): %s%s\n\n", colorBold, colorRed, resp.StatusCode, string(respBody), colorReset)
 		return nil
 	}
 
-	fmt.Printf("\n%s%s⚡ Starting execution...%s\n\n", colorBold, colorGreen, colorReset)
-	for _, a := range agents {
-		fmt.Printf("  [%s✓%s] %s — %s\n", colorGreen, colorReset, a.name, a.task)
-		time.Sleep(400 * time.Millisecond)
+	// Parse task plan from response
+	var result struct {
+		ProjectID string         `json:"project_id"`
+		Tasks     []taskResponse `json:"tasks"`
+	}
+	json.Unmarshal(respBody, &result)
+
+	fmt.Printf("\n%s%s📋 Task Plan (project: %s):%s\n\n", colorBold, colorYellow, result.ProjectID, colorReset)
+	for i, t := range result.Tasks {
+		fmt.Printf("  %s%d. [%-12s]%s %s\n", colorCyan, i+1, t.AgentType, colorReset, t.Title)
+	}
+	fmt.Println()
+
+	approved := promptYN("Approve this plan? The scheduler will begin executing tasks")
+	if !approved {
+		fmt.Printf("\n%sPlan created but not started. Tasks remain queued.%s\n", colorYellow, colorReset)
+		fmt.Printf("  View in dashboard: http://localhost:5173\n\n")
+		return nil
 	}
 
-	fmt.Printf("\n%s%s✅ Mitran is ready! Run 'mitran serve' to start the engine.%s\n\n", colorBold, colorGreen, colorReset)
+	fmt.Printf("\n%s%s⚡ Plan approved. Scheduler is now executing...%s\n\n", colorBold, colorGreen, colorReset)
+	fmt.Printf("  Dashboard:  http://localhost:5173\n")
+	fmt.Printf("  Tasks API:  %s/api/v1/tasks\n", engineURL)
+	fmt.Printf("  Checkpoints: %s/api/v1/checkpoints\n\n", engineURL)
+
+	// Poll for first checkpoint
+	fmt.Printf("%sWaiting for first agent to complete...%s\n", colorCyan, colorReset)
+	for i := 0; i < 60; i++ {
+		time.Sleep(2 * time.Second)
+		cps := fetchCheckpoints()
+		if len(cps) > 0 {
+			fmt.Printf("\n%s%s✅ First checkpoint ready!%s\n", colorBold, colorGreen, colorReset)
+			fmt.Printf("  Agent: %s\n", cps[0].AgentType)
+			fmt.Printf("  Review at: http://localhost:5173 (Checkpoints tab)\n\n")
+			return nil
+		}
+		fmt.Printf(".")
+	}
+	fmt.Printf("\n\n  Still running. Check dashboard for progress.\n\n")
 	return nil
+}
+
+func fetchCheckpoints() []taskResponse {
+	resp, err := http.Get(engineURL + "/api/v1/checkpoints")
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	var cps []taskResponse
+	body, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(body, &cps)
+	return cps
 }
 
 func prompt(label string) string {
 	p := promptui.Prompt{Label: label}
 	result, err := p.Run()
 	if err != nil {
-		fmt.Printf("Prompt failed: %v\n", err)
 		return ""
 	}
 	return result
@@ -78,26 +148,4 @@ func promptYN(label string) bool {
 	p := promptui.Prompt{Label: label, IsConfirm: true}
 	_, err := p.Run()
 	return err == nil
-}
-
-func buildPlan(company, engineers, stack string, github, slack bool) []agent {
-	agents := []agent{
-		{"Dev Agent", fmt.Sprintf("Set up %s project scaffolding for %s engineers", stack, engineers)},
-		{"Docs Agent", fmt.Sprintf("Generate technical docs for: %s", company)},
-		{"Ops Agent", "Configure monitoring (Grafana + Prometheus)"},
-		{"Review Agent", "Set up automated code review pipeline"},
-		{"HR Agent", "Initialize onboarding workflows"},
-		{"CI/CD Agent", "Create build and deploy pipelines"},
-		{"Tickets Agent", "Set up internal ticket system"},
-		{"Wiki Agent", "Generate knowledge base structure"},
-	}
-	if github {
-		agents[0].task += " + GitHub repos"
-		agents[5].task += " (GitHub Actions)"
-	}
-	if slack {
-		agents[4].task += " + Slack notifications"
-		agents[6].task += " + Slack integration"
-	}
-	return agents
 }
