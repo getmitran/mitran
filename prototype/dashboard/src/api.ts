@@ -21,6 +21,8 @@ export const api = {
     request('/tasks', { method: 'POST', body: JSON.stringify(task) }),
   reorderTask: (id: string, priority: number) =>
     request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ priority }) }),
+  updateTask: (id: string, fields: Partial<{ title: string; description: string; priority: number; status: string; labels: string[] }>) =>
+    request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(fields) }),
   triggerInit: (config: { company_name: string; description: string; languages: string[]; team_size: number }) =>
     request('/init', { method: 'POST', body: JSON.stringify(config) }),
 }

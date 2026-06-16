@@ -4,12 +4,13 @@ import PriorityQueue from './components/PriorityQueue'
 import AgentStatus from './components/AgentStatus'
 import CheckpointReview from './components/CheckpointReview'
 import InitWizard from './components/InitWizard'
+import KanbanBoard from './components/KanbanBoard'
 import { api } from './api'
 import { usePolling } from './hooks/usePolling'
 import { mockTasks, mockAgents, mockCheckpoints } from './mock-data'
 import { Task, Agent, Checkpoint } from './types'
 
-type View = 'queue' | 'agents' | 'checkpoints' | 'tickets' | 'wiki'
+type View = 'queue' | 'kanban' | 'agents' | 'checkpoints' | 'tickets' | 'wiki'
 
 function normalize<T>(data: any[] | null, fallback: T[]): T[] {
   return data ?? fallback
@@ -42,6 +43,7 @@ export default function App() {
           </div>
         )}
         {view === 'queue' && <PriorityQueue tasks={tasks} refetch={refetchTasks} />}
+        {view === 'kanban' && <KanbanBoard tasks={tasks} refetch={refetchTasks} />}
         {view === 'agents' && <AgentStatus agents={agents} />}
         {view === 'checkpoints' && <CheckpointReview checkpoints={checkpoints} refetch={refetchCps} />}
         {view === 'tickets' && <Placeholder title="Tickets" />}

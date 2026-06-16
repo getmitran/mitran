@@ -12,6 +12,15 @@ export interface Task {
   priority: Priority
   created_at?: string
   createdAt: string
+  labels?: string[]
+  comments?: Comment[]
+}
+
+export interface Comment {
+  id: string
+  text: string
+  author: string
+  created_at: string
 }
 
 export type AgentState = 'idle' | 'working' | 'error'
