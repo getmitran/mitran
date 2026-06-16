@@ -1,0 +1,3 @@
+from worker.agents.pipeline_templates.github_actions import generate_deploy_workflow, generate_rollback_workflow
+from worker.agents.pipeline_templates.makefile import generate_makefile
+from worker.agents.pipeline_templates.docker_compose import generate_docker_compose

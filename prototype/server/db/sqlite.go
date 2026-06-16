@@ -70,14 +70,67 @@ type Agent struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+type Environment struct {
+	Name             string    `json:"name"`
+	AutoDeploy       bool      `json:"auto_deploy"`
+	ApprovalRequired bool      `json:"approval_required"`
+	RollbackEnabled  bool      `json:"rollback_enabled"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type PipelineStage struct {
+	Name        string `json:"name"`
+	Environment string `json:"environment"`
+	Steps       []string `json:"steps"`
+}
+
+type Pipeline struct {
+	ID        string          `json:"id"`
+	ProjectID string          `json:"project_id"`
+	Name      string          `json:"name"`
+	Stages    []PipelineStage `json:"stages"`
+	CreatedAt time.Time       `json:"created_at"`
+}
+
+type PipelineRun struct {
+	ID         string     `json:"id"`
+	PipelineID string     `json:"pipeline_id"`
+	ProjectID  string     `json:"project_id"`
+	Branch     string     `json:"branch"`
+	Commit     string     `json:"commit"`
+	Status     string     `json:"status"`
+	StartedAt  time.Time  `json:"started_at"`
+	FinishedAt *time.Time `json:"finished_at,omitempty"`
+}
+
+type Deployment struct {
+	ID          string     `json:"id"`
+	ProjectID   string     `json:"project_id"`
+	Environment string     `json:"environment"`
+	Version     string     `json:"version"`
+	Commit      string     `json:"commit"`
+	Status      string     `json:"status"`
+	TriggeredAt time.Time  `json:"triggered_at"`
+	FinishedAt  *time.Time `json:"finished_at,omitempty"`
+}
+
+type ProjectEnvironments struct {
+	ProjectID    string        `json:"project_id"`
+	Environments []Environment `json:"environments"`
+}
+
 type Store struct {
-	Mu          sync.RWMutex // exported via accessor below
-	dir         string
-	Projects    []Project    `json:"projects"`
-	Tasks       []Task       `json:"tasks"`
-	Checkpoints []Checkpoint `json:"checkpoints"`
-	Agents      []Agent      `json:"agents"`
-	Config      map[string]string `json:"config"`
+	Mu                  sync.RWMutex // exported via accessor below
+	dir                 string
+	Projects            []Project             `json:"projects"`
+	Tasks               []Task                `json:"tasks"`
+	Checkpoints         []Checkpoint          `json:"checkpoints"`
+	Agents              []Agent               `json:"agents"`
+	Config              map[string]string     `json:"config"`
+	ProjectEnvironments []ProjectEnvironments `json:"project_environments"`
+	Pipelines           []Pipeline            `json:"pipelines"`
+	PipelineRuns        []PipelineRun         `json:"pipeline_runs"`
+	Deployments         []Deployment          `json:"deployments"`
 }
 
 func NewStore(dir string) (*Store, error) {
@@ -273,4 +326,108 @@ func (s *Store) UpdateAgentHeartbeat(id string) error {
 		}
 	}
 	return fmt.Errorf("agent %s not found", id)
+}
+
+// --- Environment methods ---
+
+func (s *Store) SetEnvironments(projectID string, envs []Environment) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.ProjectEnvironments {
+		if s.ProjectEnvironments[i].ProjectID == projectID {
+			s.ProjectEnvironments[i].Environments = envs
+			return s.Save()
+		}
+	}
+	s.ProjectEnvironments = append(s.ProjectEnvironments, ProjectEnvironments{ProjectID: projectID, Environments: envs})
+	return s.Save()
+}
+
+func (s *Store) GetEnvironments(projectID string) []Environment {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	for _, pe := range s.ProjectEnvironments {
+		if pe.ProjectID == projectID {
+			return pe.Environments
+		}
+	}
+	return nil
+}
+
+func (s *Store) UpdateEnvironment(projectID, envName string, fn func(*Environment)) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.ProjectEnvironments {
+		if s.ProjectEnvironments[i].ProjectID == projectID {
+			for j := range s.ProjectEnvironments[i].Environments {
+				if s.ProjectEnvironments[i].Environments[j].Name == envName {
+					fn(&s.ProjectEnvironments[i].Environments[j])
+					return s.Save()
+				}
+			}
+			return fmt.Errorf("environment %s not found", envName)
+		}
+	}
+	return fmt.Errorf("no environments configured for project %s", projectID)
+}
+
+// --- Pipeline methods ---
+
+func (s *Store) AddPipeline(p Pipeline) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.Pipelines = append(s.Pipelines, p)
+	return s.Save()
+}
+
+func (s *Store) ListPipelines(projectID string) []Pipeline {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []Pipeline
+	for _, p := range s.Pipelines {
+		if p.ProjectID == projectID {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+func (s *Store) AddPipelineRun(run PipelineRun) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.PipelineRuns = append(s.PipelineRuns, run)
+	return s.Save()
+}
+
+func (s *Store) ListPipelineRuns(pipelineID string) []PipelineRun {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []PipelineRun
+	for _, r := range s.PipelineRuns {
+		if r.PipelineID == pipelineID {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+// --- Deployment methods ---
+
+func (s *Store) AddDeployment(d Deployment) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.Deployments = append(s.Deployments, d)
+	return s.Save()
+}
+
+func (s *Store) ListDeployments(projectID string) []Deployment {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []Deployment
+	for _, d := range s.Deployments {
+		if d.ProjectID == projectID {
+			result = append(result, d)
+		}
+	}
+	return result
 }

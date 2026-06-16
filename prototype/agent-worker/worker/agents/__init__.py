@@ -1,6 +1,7 @@
 from worker.agents.dev_agent import DevAgent
 from worker.agents.docs_agent import DocsAgent
 from worker.agents.cicd_agent import CicdAgent
+from worker.agents.cicd_agent_v2 import CicdAgentV2
 from worker.agents.tickets_agent import TicketsAgent
 from worker.agents.wiki_agent import WikiAgent
 from worker.agents.ops_agent import OpsAgent
@@ -10,7 +11,8 @@ from worker.agents.dashboard_agent import DashboardAgent
 AGENTS = {
     "dev": DevAgent(),
     "docs": DocsAgent(),
-    "cicd": CicdAgent(),
+    "cicd": CicdAgentV2(),  # v2 with multi-environment support
+    "cicd_v1": CicdAgent(),  # legacy single-env agent
     "tickets": TicketsAgent(),
     "wiki": WikiAgent(),
     "ops": OpsAgent(),

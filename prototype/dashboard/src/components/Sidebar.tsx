@@ -1,4 +1,4 @@
-import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen } from 'lucide-react'
+import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap } from 'lucide-react'
 
 const nav = [
   { id: 'queue', label: 'Queue', icon: ListOrdered },
@@ -13,14 +13,21 @@ type View = (typeof nav)[number]['id']
 interface Props {
   active: View
   onNavigate: (v: View) => void
+  onInit: () => void
 }
 
-export default function Sidebar({ active, onNavigate }: Props) {
+export default function Sidebar({ active, onNavigate, onInit }: Props) {
   return (
     <aside className="w-56 bg-surface border-r border-gray-800 flex flex-col">
       <div className="px-5 py-5 border-b border-gray-800">
         <h1 className="text-xl font-bold text-accent tracking-tight">mitran</h1>
         <p className="text-[11px] text-gray-500 mt-0.5">agent orchestration</p>
+      </div>
+      <div className="px-4 py-3 border-b border-gray-800">
+        <button onClick={onInit}
+          className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/80 text-black font-medium text-xs py-2 rounded-md transition-colors">
+          <Zap size={14} /> Init Company
+        </button>
       </div>
       <nav className="flex-1 py-3">
         {nav.map(({ id, label, icon: Icon }) => (
