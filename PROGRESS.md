@@ -17,14 +17,29 @@
 - [x] MVP Plan (6-month sprint breakdown)
 - [x] Competitive Analysis
 
+### Completed (2026-06-16)
+- [x] Landing page live (https://getmitran.vercel.app)
+- [x] GitHub org + repo (https://github.com/getmitran/mitran)
+- [x] Go DAG engine prototype (scheduler, queue, locks — tests pass)
+- [x] Go CLI (`mitran init` interactive flow — working)
+- [x] Python Agent SDK + 3 standalone agents (tests pass)
+- [x] Go Core Engine HTTP server (REST API, scheduler loop, JSON persistence)
+- [x] Python Agent Worker (8 agents, AWS Bedrock Claude, real LLM calls)
+- [x] React Dashboard (live API polling, InitWizard, approve/reject)
+- [x] Multi-environment CI/CD (configurable environments, pipeline templates)
+- [x] Running Guide documentation
+- [x] Development SOP
+
 ### Next Steps
-- [ ] Domain registration (mitran.sh / mitran.run / usemitran.com)
+- [ ] Domain registration (getmitran.dev)
 - [ ] Logo & branding
-- [ ] Landing page (waitlist)
-- [ ] GitHub repo scaffold (Go module init)
-- [ ] Fundraising deck (refine pitch for investors)
+- [ ] WebSocket for real-time dashboard updates
+- [ ] Test full end-to-end flow with Bedrock credentials
+- [ ] GitHub Actions CI for the repo itself
+- [ ] Demo video for HN launch
+- [ ] Discord community setup
 - [ ] Identify first 3 design partners
-- [ ] Technical prototype (DAG engine + 1 agent end-to-end)
+- [ ] Wire CLI → Engine (CLI calls API instead of simulating)
 
 ## Key Decisions Log
 
