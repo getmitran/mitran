@@ -1,8 +1,11 @@
+// NOTE: In-memory + JSON persistence is suitable for <50 tenants.
+// For larger deployments, migrate to SQLite (see docs/v020-roadmap.md).
 package tenant
 
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,6 +35,9 @@ func dataPath() string {
 func NewStore() *TenantStore {
 	s := &TenantStore{tenants: make(map[string]*Tenant), path: dataPath()}
 	s.load()
+	if len(s.tenants) > 40 {
+		log.Println("WARNING: tenant count approaching file-based limit, consider migrating to SQLite")
+	}
 	return s
 }
 

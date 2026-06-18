@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,13 +24,15 @@ func LoadSSOConfig() SSOConfig {
 }
 
 var (
-	ssoStates = map[string]time.Time{}
-	statesMu  sync.Mutex
+	ssoStates  = map[string]time.Time{}
+	ssoNonces  = map[string]time.Time{}
+	statesMu   sync.Mutex
 )
 
 func cleanExpiredStates() {
 	now := time.Now()
 	for k, v := range ssoStates { if now.After(v) { delete(ssoStates, k) } }
+	for k, v := range ssoNonces { if now.After(v) { delete(ssoNonces, k) } }
 }
 
 func makeSessionToken(email string) string {
@@ -40,15 +43,23 @@ func makeSessionToken(email string) string {
 }
 
 func HandleSSOLogin(w http.ResponseWriter, r *http.Request) {
+	if len(os.Getenv("MITRAN_SESSION_SECRET")) < 16 {
+		log.Println("WARNING: MITRAN_SESSION_SECRET should be at least 16 characters")
+	}
 	cfg := LoadSSOConfig()
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
 		http.Error(w, "entropy failure", http.StatusInternalServerError); return
 	}
 	state := hex.EncodeToString(b)
-	statesMu.Lock(); cleanExpiredStates(); ssoStates[state] = time.Now().Add(10 * time.Minute); statesMu.Unlock()
-	u := fmt.Sprintf("%s/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+email&state=%s",
-		strings.TrimRight(cfg.Issuer, "/"), url.QueryEscape(cfg.ClientID), url.QueryEscape(cfg.RedirectURL), state)
+	nb := make([]byte, 16)
+	if _, err := rand.Read(nb); err != nil {
+		http.Error(w, "entropy failure", http.StatusInternalServerError); return
+	}
+	nonce := hex.EncodeToString(nb)
+	statesMu.Lock(); cleanExpiredStates(); ssoStates[state] = time.Now().Add(10 * time.Minute); ssoNonces[nonce] = time.Now().Add(10 * time.Minute); statesMu.Unlock()
+	u := fmt.Sprintf("%s/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+email&state=%s&nonce=%s",
+		strings.TrimRight(cfg.Issuer, "/"), url.QueryEscape(cfg.ClientID), url.QueryEscape(cfg.RedirectURL), state, nonce)
 	http.Redirect(w, r, u, http.StatusFound)
 }
 
@@ -75,11 +86,16 @@ func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	seg := strings.ReplaceAll(strings.ReplaceAll(parts[1], "-", "+"), "_", "/")
 	for len(seg)%4 != 0 { seg += "=" }
 	payload, _ := base64.StdEncoding.DecodeString(seg)
-	var claims struct{ Iss, Sub, Email, Aud string; Exp int64 }
+	var claims struct{ Iss, Sub, Email, Aud, Nonce string; Exp int64 }
 	json.Unmarshal(payload, &claims)
 	if claims.Iss != cfg.Issuer || claims.Aud != cfg.ClientID || time.Now().Unix() > claims.Exp {
 		http.Error(w, "token validation failed", http.StatusUnauthorized); return
 	}
+	statesMu.Lock()
+	nExp, nOk := ssoNonces[claims.Nonce]
+	if nOk { delete(ssoNonces, claims.Nonce) }
+	statesMu.Unlock()
+	if !nOk || time.Now().After(nExp) { http.Error(w, "invalid nonce", http.StatusUnauthorized); return }
 	http.SetCookie(w, &http.Cookie{Name: "session", Value: makeSessionToken(claims.Email), Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
 	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }

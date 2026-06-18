@@ -139,8 +139,14 @@ func (s *MemoryStore) loadFile(name string, target interface{}) {
 }
 
 func (s *MemoryStore) writeFile(name string, data interface{}) {
-	b, _ := json.MarshalIndent(data, "", "  ")
-	os.WriteFile(filepath.Join(s.dir, name), b, 0644)
+	b, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "memory: marshal error: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(filepath.Join(s.dir, name), b, 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "memory: write error: %v\n", err)
+	}
 }
 
 func genID() string {

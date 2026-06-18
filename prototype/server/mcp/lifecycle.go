@@ -1,3 +1,5 @@
+//go:build !windows
+
 package mcp
 
 import (
@@ -6,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -151,7 +154,7 @@ func (lm *LifecycleManager) HealthCheck(id string) (*ServerStatus, error) {
 	defer srv.mu.Unlock()
 
 	if srv.cmd != nil && srv.cmd.Process != nil {
-		if err := srv.cmd.Process.Signal(os.Signal(nil)); err != nil {
+		if err := srv.cmd.Process.Signal(syscall.Signal(0)); err != nil {
 			srv.status.Running = false
 		} else {
 			srv.status.Running = true

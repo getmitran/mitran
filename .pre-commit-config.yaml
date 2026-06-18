@@ -14,3 +14,15 @@ repos:
     rev: v0.5.1
     hooks:
       - id: go-fmt
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (python)
+        entry: ruff check prototype/agent-worker
+        language: system
+        pass_filenames: false
+      - id: prettier
+        name: prettier (ts/tsx)
+        entry: npx prettier --check "prototype/dashboard/src/**/*.{ts,tsx}"
+        language: system
+        pass_filenames: false
