@@ -7,6 +7,7 @@ import NewTaskModal from './NewTaskModal'
 
 const COLUMNS = [
   { id: 'backlog', label: 'Backlog', status: 'queued' },
+  { id: 'todo', label: 'To Do', status: 'todo' },
   { id: 'in_progress', label: 'In Progress', status: 'running' },
   { id: 'review', label: 'Review', status: 'checkpoint' },
   { id: 'done', label: 'Done', status: 'approved' },
@@ -22,9 +23,14 @@ const PRIORITY_COLORS: Record<number, string> = {
   1: 'bg-red-500', 2: 'bg-orange-500', 3: 'bg-yellow-500', 4: 'bg-blue-500', 5: 'bg-gray-500',
 }
 
+const PRIORITY_LABELS: Record<number, string> = {
+  1: 'Critical', 2: 'High', 3: 'Medium', 4: 'Low', 5: 'None',
+}
+
 function statusToColumn(status: string): string {
   switch (status) {
     case 'queued': return 'backlog'
+    case 'todo': return 'todo'
     case 'running': case 'in-progress': return 'in_progress'
     case 'checkpoint': case 'review': return 'review'
     case 'approved': case 'done': return 'done'
@@ -35,6 +41,7 @@ function statusToColumn(status: string): string {
 function columnToApiStatus(col: string): string {
   switch (col) {
     case 'backlog': return 'queued'
+    case 'todo': return 'todo'
     case 'in_progress': return 'running'
     case 'review': return 'checkpoint'
     case 'done': return 'approved'
@@ -121,10 +128,27 @@ export default function KanbanBoard({ tasks, refetch }: Props) {
                     onDragStart={() => handleDragStart(task.id)}
                     onDragEnd={handleDragEnd}
                     onClick={() => setSelectedTask(task)}
-                    className="p-3 rounded-lg border border-white/5 cursor-pointer hover:border-cyan-500/30 transition-all duration-200 drag:opacity-50 drag:shadow-lg"
+                    className="p-3 rounded-lg border border-white/5 cursor-pointer hover:border-cyan-500/30 transition-all duration-200"
                     style={{ background: '#141b2d' }}
                   >
-                    <p className="text-sm text-gray-200 font-medium leading-tight mb-2">{task.title}</p>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-sm text-gray-200 font-medium leading-tight">{task.title}</p>
+                      <span className={`flex-shrink-0 w-2 h-2 mt-1 rounded-full ${PRIORITY_COLORS[task.priority] || 'bg-gray-500'}`}
+                        title={PRIORITY_LABELS[task.priority] || 'Unknown'} />
+                    </div>
+
+                    {task.description && (
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{task.description}</p>
+                    )}
+
+                    {(task as any).labels?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {(task as any).labels.map((l: string) => (
+                          <span key={l} className="text-[10px] px-1.5 py-0.5 bg-white/5 text-gray-400 rounded border border-white/10">{l}</span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {task.agent_type && (
@@ -132,7 +156,11 @@ export default function KanbanBoard({ tasks, refetch }: Props) {
                             {task.agent_type.replace('-agent', '')}
                           </span>
                         )}
-                        <span className={`w-2 h-2 rounded-full ${PRIORITY_COLORS[task.priority] || 'bg-gray-500'}`} />
+                        {(task as any).assignee && (
+                          <span className="text-[10px] text-cyan-400/80 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                            {(task as any).assignee}
+                          </span>
+                        )}
                       </div>
                       <span className="text-[10px] text-gray-500">{timeAgo(task.created_at || task.createdAt)}</span>
                     </div>
