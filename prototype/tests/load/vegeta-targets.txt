@@ -1,0 +1,11 @@
+GET http://localhost:7780/health
+GET http://localhost:7780/api/v1/projects
+POST http://localhost:7780/api/v1/chat
+Content-Type: application/json
+@chat-body.json
+
+POST http://localhost:7780/api/v1/memory
+Content-Type: application/json
+@memory-body.json
+
+GET http://localhost:7780/api/v1/memory?project_id=load-test&q=test

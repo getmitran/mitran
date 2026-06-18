@@ -16,6 +16,18 @@ class AgentResult:
     files: list[FileChange] = field(default_factory=list)
 
 
+class BaseAgent:
+    """Base class for all Mitran agents."""
+    agent_type: str = "base"
+    system_prompt: str = ""
+
+    def execute(self, task_description: str, context: dict) -> AgentResult:
+        raise NotImplementedError
+
+    def _call_llm(self, prompt: str) -> str:
+        return invoke(self.system_prompt, prompt)
+
+
 SYSTEM_PROMPT = """You are Mitran's Dev Agent — a senior software engineer that generates production-ready project scaffolding.
 
 Given a task description and project context, generate complete, working source files. Output ONLY valid JSON with this structure:

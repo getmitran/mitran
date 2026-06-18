@@ -1,0 +1,61 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype/server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - run: go test -coverprofile=coverage.out ./...
+      - uses: codecov/codecov-action@v4
+        with:
+          files: prototype/server/coverage.out
+          flags: go
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  python-coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype/agent-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e ".[dev]" pytest-cov
+      - run: pytest --cov=worker --cov-report=xml:coverage.xml
+      - uses: codecov/codecov-action@v4
+        with:
+          files: prototype/agent-worker/coverage.xml
+          flags: python
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  frontend-coverage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: prototype/dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npx vitest run --coverage --coverage.reporter=lcov
+      - uses: codecov/codecov-action@v4
+        with:
+          files: prototype/dashboard/coverage/lcov.info
+          flags: frontend
+          token: ${{ secrets.CODECOV_TOKEN }}

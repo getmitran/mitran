@@ -1,7 +1,7 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  engine:
+  mitran-engine:
     build:
       context: ./prototype/server
       dockerfile: Dockerfile
@@ -9,42 +9,75 @@ services:
       - "7780:7780"
     environment:
       - MITRAN_PORT=7780
+      - MITRAN_WORKER_URL=http://mitran-worker:8888
       - MITRAN_DATA_DIR=/data
-      - MITRAN_JWT_SECRET=${MITRAN_JWT_SECRET:-dev-secret-change-me}
+      - CHROMADB_URL=http://chromadb:8000
     volumes:
       - engine-data:/data
+    depends_on:
+      chromadb:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7780/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7780/"]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 10s
 
-  worker:
+  mitran-worker:
     build:
       context: ./prototype/agent-worker
       dockerfile: Dockerfile
     ports:
       - "8888:8888"
     environment:
-      - MITRAN_ENGINE_URL=http://engine:7780
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - WORKER_PORT=8888
+      - ENGINE_URL=http://mitran-engine:7780
+      - CHROMADB_URL=http://chromadb:8000
+      - AWS_REGION=us-east-1
+    volumes:
+      - worker-data:/data
     depends_on:
-      engine:
+      mitran-engine:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
-  dashboard:
+  mitran-dashboard:
     build:
       context: ./prototype/dashboard
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
-      - VITE_API_URL=http://localhost:7780
+      - VITE_API_URL=http://mitran-engine:7780
     depends_on:
-      - engine
+      mitran-engine:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   engine-data:
+  worker-data:
+  chroma-data:

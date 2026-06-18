@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mitran.fullname" . }}-engine
+  labels:
+    {{- include "mitran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: engine
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.engine.port }}
+      targetPort: {{ .Values.engine.port }}
+      protocol: TCP
+  selector:
+    {{- include "mitran.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: engine
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mitran.fullname" . }}-worker
+  labels:
+    {{- include "mitran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.worker.port }}
+      targetPort: {{ .Values.worker.port }}
+      protocol: TCP
+  selector:
+    {{- include "mitran.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mitran.fullname" . }}-dashboard
+  labels:
+    {{- include "mitran.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: {{ .Values.dashboard.port }}
+      protocol: TCP
+  selector:
+    {{- include "mitran.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard

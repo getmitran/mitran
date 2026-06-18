@@ -1,3 +1,5 @@
+//go:build sqlite_backend
+
 package db
 
 import (

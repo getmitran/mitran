@@ -1,0 +1,63 @@
+engine:
+  image:
+    repository: mitran/engine
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 7780
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    - name: MITRAN_ENV
+      value: production
+
+worker:
+  image:
+    repository: mitran/agent-worker
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8888
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env:
+    - name: ENGINE_URL
+      value: http://mitran-engine:7780
+    - name: AWS_REGION
+      value: us-east-1
+
+dashboard:
+  image:
+    repository: mitran/dashboard
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  host: mitran.local
+  tls: []
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""

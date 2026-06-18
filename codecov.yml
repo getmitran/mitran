@@ -1,0 +1,22 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 60%
+    patch:
+      default:
+        target: 80%
+
+flags:
+  go:
+    paths:
+      - prototype/server/
+    carryforward: true
+  python:
+    paths:
+      - prototype/agent-worker/
+    carryforward: true
+  frontend:
+    paths:
+      - prototype/dashboard/
+    carryforward: true

@@ -1,0 +1,539 @@
+openapi: 3.0.3
+info:
+  title: Mitran API
+  description: Mitran agent-native company infrastructure platform REST API
+  version: 0.1.0
+  license:
+    name: AGPL-3.0
+servers:
+  - url: http://localhost:7780/api/v1
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime_seconds:
+                    type: integer
+                  version:
+                    type: string
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus-format metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /agents:
+    get:
+      summary: List agents
+      operationId: listAgents
+      responses:
+        '200':
+          description: List of configured agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Agent'
+    post:
+      summary: Create agent
+      operationId: createAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreate'
+      responses:
+        '201':
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+  /tasks:
+    get:
+      summary: List tasks
+      operationId: listTasks
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, completed, failed]
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+    post:
+      summary: Create task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+  /sessions:
+    get:
+      summary: List sessions
+      operationId: listSessions
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+    post:
+      summary: Create session
+      operationId: createSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent_id:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+
+  /memory:
+    get:
+      summary: List memory entries
+      operationId: listMemory
+      parameters:
+        - name: scope
+          in: query
+          schema:
+            type: string
+            enum: [global, workspace]
+        - name: query
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Memory entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemoryEntry'
+    post:
+      summary: Store memory entry
+      operationId: createMemory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryCreate'
+      responses:
+        '201':
+          description: Memory stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryEntry'
+
+  /cron:
+    get:
+      summary: List cron jobs
+      operationId: listCronJobs
+      responses:
+        '200':
+          description: List of cron jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CronJob'
+    post:
+      summary: Create cron job
+      operationId: createCronJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CronJobCreate'
+      responses:
+        '201':
+          description: Cron job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CronJob'
+
+  /artifacts:
+    get:
+      summary: List artifacts
+      operationId: listArtifacts
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: kind
+          in: query
+          schema:
+            type: string
+            enum: [widget, html, markdown, svg, json, text]
+      responses:
+        '200':
+          description: List of artifacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Artifact'
+    post:
+      summary: Create artifact
+      operationId: createArtifact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactCreate'
+      responses:
+        '201':
+          description: Artifact created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+
+  /snapshots:
+    get:
+      summary: List snapshots
+      operationId: listSnapshots
+      responses:
+        '200':
+          description: List of snapshots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Snapshot'
+    post:
+      summary: Create snapshot
+      operationId: createSnapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+      responses:
+        '201':
+          description: Snapshot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+
+  /webhooks/github:
+    post:
+      summary: GitHub webhook receiver
+      operationId: handleGitHubWebhook
+      parameters:
+        - name: X-GitHub-Event
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Hub-Signature-256
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+
+  /webhooks/slack:
+    post:
+      summary: Slack webhook receiver
+      operationId: handleSlackWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+
+components:
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [dev, docs, ops, review, hr, cicd, tickets, wiki]
+        status:
+          type: string
+          enum: [idle, busy, error]
+        created_at:
+          type: string
+          format: date-time
+
+    AgentCreate:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [dev, docs, ops, review, hr, cicd, tickets, wiki]
+        config:
+          type: object
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        agent_id:
+          type: string
+        priority:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        agent_id:
+          type: string
+        priority:
+          type: integer
+          default: 5
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        agent_id:
+          type: string
+        status:
+          type: string
+          enum: [active, closed]
+        created_at:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+
+    MemoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+        scope:
+          type: string
+          enum: [global, workspace]
+        created_at:
+          type: string
+          format: date-time
+
+    MemoryCreate:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+        scope:
+          type: string
+          enum: [global, workspace]
+          default: workspace
+
+    CronJob:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        schedule:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [active, paused]
+        last_run:
+          type: string
+          format: date-time
+        next_run:
+          type: string
+          format: date-time
+
+    CronJobCreate:
+      type: object
+      required: [name, message]
+      properties:
+        name:
+          type: string
+        message:
+          type: string
+        cron_expr:
+          type: string
+        every_seconds:
+          type: integer
+
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [widget, html, markdown, svg, json, text]
+        version:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ArtifactCreate:
+      type: object
+      required: [name, content]
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+        kind:
+          type: string
+          enum: [widget, html, markdown, svg, json, text]
+          default: html
+        tags:
+          type: array
+          items:
+            type: string
+
+    Snapshot:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        size_bytes:
+          type: integer
