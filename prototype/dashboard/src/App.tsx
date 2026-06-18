@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import PriorityQueue from './components/PriorityQueue'
 import AgentStatus from './components/AgentStatus'
+import { AgentStatusPage } from './components/AgentStatusPage'
 import CheckpointReview from './components/CheckpointReview'
 import InitWizard from './components/InitWizard'
 import KanbanBoard from './components/KanbanBoard'
@@ -51,7 +52,7 @@ export default function App() {
         {view === 'kanban' && <KanbanBoard tasks={tasks} refetch={refetchTasks} />}
         {view === 'chat' && <ChatInterface />}
         {view === 'sessions' && <SessionsPage onResumeSession={(id, agent) => { setView('chat') }} />}
-        {view === 'agents' && <AgentStatus agents={agents} />}
+        {view === 'agents' && <AgentStatusPage />}
         {view === 'checkpoints' && <CheckpointReview checkpoints={checkpoints} refetch={refetchCps} />}
         {view === 'tickets' && <TicketingApp />}
         {view === 'wiki' && <WikiApp />}

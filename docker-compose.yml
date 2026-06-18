@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  engine:
+    build:
+      context: ./prototype/server
+      dockerfile: Dockerfile
+    ports:
+      - "7780:7780"
+    environment:
+      - MITRAN_PORT=7780
+      - MITRAN_DATA_DIR=/data
+      - MITRAN_JWT_SECRET=${MITRAN_JWT_SECRET:-dev-secret-change-me}
+    volumes:
+      - engine-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7780/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: ./prototype/agent-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - MITRAN_ENGINE_URL=http://engine:7780
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    depends_on:
+      engine:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: ./prototype/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:7780
+    depends_on:
+      - engine
+
+volumes:
+  engine-data:
