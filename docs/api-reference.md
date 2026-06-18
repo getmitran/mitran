@@ -73,3 +73,24 @@ Base URL: `http://localhost:8888`
 | POST | /execute | Execute agent task |
 | POST | /stream | Stream LLM response (SSE) |
 | POST | /chat | Chat with agent |
+
+## Batch
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/v1/batch | Execute multiple API calls in one request (max 20) |
+
+### Batch Request Format
+```json
+[
+  {"method": "GET", "path": "/api/v1/tasks"},
+  {"method": "POST", "path": "/api/v1/tasks", "body": {"title": "New task"}}
+]
+```
+
+### Batch Response Format
+```json
+[
+  {"status": 200, "body": [...]},
+  {"status": 201, "body": {"id": "..."}}
+]
+```
