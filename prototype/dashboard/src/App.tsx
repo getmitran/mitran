@@ -10,12 +10,23 @@ import TicketingApp from './components/TicketingApp'
 import WikiApp from './components/WikiApp'
 import ChatInterface from './components/ChatInterface'
 import { SessionsPage } from './components/SessionsPage'
+import ProjectsPage from './components/ProjectsPage'
+import WorkflowBuilderPage from './components/WorkflowBuilderPage'
+import PluginsPage from './components/PluginsPage'
+import AppsPage from './components/AppsPage'
+import IntegrationsPage from './components/IntegrationsPage'
+import WebhooksPage from './components/WebhooksPage'
+import UsagePage from './components/UsagePage'
+import OnboardingPage from './components/OnboardingPage'
+import AuditLogPage from './components/AuditLogPage'
+import HRPortalPage from './components/HRPortalPage'
+import SprintsPage from './components/SprintsPage'
 import { api } from './api'
 import { usePolling } from './hooks/usePolling'
 import { mockTasks, mockAgents, mockCheckpoints } from './mock-data'
 import { Task, Agent, Checkpoint } from './types'
 
-type View = 'queue' | 'kanban' | 'chat' | 'sessions' | 'agents' | 'checkpoints' | 'tickets' | 'wiki' | 'settings'
+type View = 'queue' | 'kanban' | 'chat' | 'sessions' | 'agents' | 'checkpoints' | 'tickets' | 'wiki' | 'settings' | 'projects' | 'workflows' | 'plugins' | 'apps' | 'integrations' | 'webhooks' | 'usage' | 'onboarding' | 'audit' | 'hr' | 'sprints'
 
 function normalize<T>(data: any[] | null, fallback: T[]): T[] {
   return data ?? fallback
@@ -56,6 +67,17 @@ export default function App() {
         {view === 'tickets' && <TicketingApp />}
         {view === 'wiki' && <WikiApp />}
         {view === 'settings' && <SettingsPage />}
+        {view === 'projects' && <ProjectsPage />}
+        {view === 'workflows' && <WorkflowBuilderPage />}
+        {view === 'plugins' && <PluginsPage />}
+        {view === 'apps' && <AppsPage />}
+        {view === 'integrations' && <IntegrationsPage />}
+        {view === 'webhooks' && <WebhooksPage />}
+        {view === 'usage' && <UsagePage />}
+        {view === 'onboarding' && <OnboardingPage />}
+        {view === 'audit' && <AuditLogPage />}
+        {view === 'hr' && <HRPortalPage />}
+        {view === 'sprints' && <SprintsPage />}
       </main>
       <InitWizard open={initOpen} onClose={() => setInitOpen(false)} />
     </div>

@@ -1,4 +1,4 @@
-import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings, MessageSquare, History } from 'lucide-react'
+import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings, MessageSquare, History, FolderOpen, GitBranch, Puzzle, AppWindow, Link2, Webhook, DollarSign, Rocket, FileSearch, Users, CalendarDays } from 'lucide-react'
 
 const nav = [
   { id: 'queue', label: 'Queue', icon: ListOrdered },
@@ -7,8 +7,19 @@ const nav = [
   { id: 'sessions', label: 'Sessions', icon: History },
   { id: 'agents', label: 'Agents', icon: Bot },
   { id: 'checkpoints', label: 'Checkpoints', icon: ShieldCheck },
+  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'workflows', label: 'Workflows', icon: GitBranch },
+  { id: 'plugins', label: 'Plugins', icon: Puzzle },
+  { id: 'apps', label: 'Apps', icon: AppWindow },
+  { id: 'integrations', label: 'Integrations', icon: Link2 },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook },
+  { id: 'usage', label: 'Usage', icon: DollarSign },
+  { id: 'sprints', label: 'Sprints', icon: CalendarDays },
+  { id: 'hr', label: 'HR Portal', icon: Users },
+  { id: 'audit', label: 'Audit Log', icon: FileSearch },
   { id: 'tickets', label: 'Tickets', icon: Ticket },
   { id: 'wiki', label: 'Wiki', icon: BookOpen },
+  { id: 'onboarding', label: 'Onboarding', icon: Rocket },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const
 
