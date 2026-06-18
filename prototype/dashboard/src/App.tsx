@@ -5,12 +5,13 @@ import AgentStatus from './components/AgentStatus'
 import CheckpointReview from './components/CheckpointReview'
 import InitWizard from './components/InitWizard'
 import KanbanBoard from './components/KanbanBoard'
+import SettingsPage from './components/SettingsPage'
 import { api } from './api'
 import { usePolling } from './hooks/usePolling'
 import { mockTasks, mockAgents, mockCheckpoints } from './mock-data'
 import { Task, Agent, Checkpoint } from './types'
 
-type View = 'queue' | 'kanban' | 'agents' | 'checkpoints' | 'tickets' | 'wiki'
+type View = 'queue' | 'kanban' | 'agents' | 'checkpoints' | 'tickets' | 'wiki' | 'settings'
 
 function normalize<T>(data: any[] | null, fallback: T[]): T[] {
   return data ?? fallback
@@ -48,6 +49,7 @@ export default function App() {
         {view === 'checkpoints' && <CheckpointReview checkpoints={checkpoints} refetch={refetchCps} />}
         {view === 'tickets' && <Placeholder title="Tickets" />}
         {view === 'wiki' && <Placeholder title="Wiki" />}
+        {view === 'settings' && <SettingsPage />}
       </main>
       <InitWizard open={initOpen} onClose={() => setInitOpen(false)} />
     </div>

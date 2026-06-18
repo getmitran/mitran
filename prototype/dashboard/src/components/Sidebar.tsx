@@ -1,4 +1,4 @@
-import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid } from 'lucide-react'
+import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings } from 'lucide-react'
 
 const nav = [
   { id: 'queue', label: 'Queue', icon: ListOrdered },
@@ -7,6 +7,7 @@ const nav = [
   { id: 'checkpoints', label: 'Checkpoints', icon: ShieldCheck },
   { id: 'tickets', label: 'Tickets', icon: Ticket },
   { id: 'wiki', label: 'Wiki', icon: BookOpen },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ] as const
 
 type View = (typeof nav)[number]['id']

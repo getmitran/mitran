@@ -23,6 +23,9 @@ export const api = {
     request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify({ priority }) }),
   updateTask: (id: string, fields: Partial<{ title: string; description: string; priority: number; status: string; labels: string[] }>) =>
     request(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(fields) }),
+  fetchSettings: () => request<any>('/settings'),
+  updateSettings: (settings: any) =>
+    request('/settings', { method: 'PUT', body: JSON.stringify(settings) }),
   triggerInit: (config: { company_name: string; description: string; languages: string[]; team_size: number }) =>
     request('/init', { method: 'POST', body: JSON.stringify(config) }),
 }
