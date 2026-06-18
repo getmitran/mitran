@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { api } from '../api'
 
 interface Agent {
   name: string
@@ -10,28 +9,27 @@ interface Agent {
   tasks_completed: number
 }
 
+const DEFAULT_AGENTS: Agent[] = [
+  { name: 'Dev', type: 'dev', status: 'idle', tasks_completed: 0 },
+  { name: 'Docs', type: 'docs', status: 'idle', tasks_completed: 0 },
+  { name: 'Ops', type: 'ops', status: 'idle', tasks_completed: 0 },
+  { name: 'Review', type: 'review', status: 'idle', tasks_completed: 0 },
+  { name: 'HR', type: 'hr', status: 'idle', tasks_completed: 0 },
+  { name: 'CI/CD', type: 'cicd', status: 'idle', tasks_completed: 0 },
+  { name: 'Tickets', type: 'tickets', status: 'idle', tasks_completed: 0 },
+  { name: 'Wiki', type: 'wiki', status: 'idle', tasks_completed: 0 },
+]
+
 export function AgentStatusPage() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchAgents = () => {
-      api.get('/api/v1/agents/status').then(r => {
-        setAgents(r.data || [])
-        setLoading(false)
-      }).catch(() => {
-        setAgents([
-          { name: 'Dev', type: 'dev', status: 'idle', tasks_completed: 0 },
-          { name: 'Docs', type: 'docs', status: 'idle', tasks_completed: 0 },
-          { name: 'Ops', type: 'ops', status: 'idle', tasks_completed: 0 },
-          { name: 'Review', type: 'review', status: 'idle', tasks_completed: 0 },
-          { name: 'HR', type: 'hr', status: 'idle', tasks_completed: 0 },
-          { name: 'CI/CD', type: 'cicd', status: 'idle', tasks_completed: 0 },
-          { name: 'Tickets', type: 'tickets', status: 'idle', tasks_completed: 0 },
-          { name: 'Wiki', type: 'wiki', status: 'idle', tasks_completed: 0 },
-        ])
-        setLoading(false)
-      })
+      fetch('http://localhost:7780/api/v1/agents/status')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => { setAgents(data || DEFAULT_AGENTS); setLoading(false) })
+        .catch(() => { setAgents(DEFAULT_AGENTS); setLoading(false) })
     }
     fetchAgents()
     const interval = setInterval(fetchAgents, 5000)
