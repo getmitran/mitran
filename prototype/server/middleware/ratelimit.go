@@ -1,73 +1,64 @@
 package middleware
 
 import (
+	"math"
 	"net/http"
 	"sync"
 	"time"
 )
 
-type visitor struct {
+type Bucket struct {
 	tokens   float64
-	lastSeen time.Time
+	max      float64
+	refill   float64
+	lastTime time.Time
 }
 
 type RateLimiter struct {
-	mu       sync.Mutex
-	visitors map[string]*visitor
-	rate     float64 // tokens per second
-	burst    int
+	mu      sync.Mutex
+	buckets map[string]*Bucket
+	rps     float64
+	burst   int
 }
 
-func NewRateLimiter(rps float64, burst int) *RateLimiter {
-	rl := &RateLimiter{visitors: make(map[string]*visitor), rate: rps, burst: burst}
-	go rl.cleanup()
-	return rl
-}
-
-func (rl *RateLimiter) Allow(ip string) bool {
+func (rl *RateLimiter) Allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
-	v, exists := rl.visitors[ip]
-	if !exists {
-		rl.visitors[ip] = &visitor{tokens: float64(rl.burst) - 1, lastSeen: time.Now()}
-		return true
+	b, ok := rl.buckets[key]
+	if !ok {
+		b = &Bucket{tokens: float64(rl.burst), max: float64(rl.burst), refill: rl.rps, lastTime: time.Now()}
+		rl.buckets[key] = b
 	}
-	elapsed := time.Since(v.lastSeen).Seconds()
-	v.tokens += elapsed * rl.rate
-	if v.tokens > float64(rl.burst) {
-		v.tokens = float64(rl.burst)
+	now := time.Now()
+	b.tokens = math.Min(b.max, b.tokens+now.Sub(b.lastTime).Seconds()*b.refill)
+	b.lastTime = now
+	if b.tokens < 1 {
+		return false
 	}
-	v.lastSeen = time.Now()
-	if v.tokens >= 1 {
-		v.tokens--
-		return true
-	}
-	return false
+	b.tokens--
+	return true
 }
 
-func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := r.RemoteAddr
-		if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
-			ip = fwd
-		}
-		if !rl.Allow(ip) {
-			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func (rl *RateLimiter) cleanup() {
-	for {
-		time.Sleep(time.Minute)
-		rl.mu.Lock()
-		for ip, v := range rl.visitors {
-			if time.Since(v.lastSeen) > 3*time.Minute {
-				delete(rl.visitors, ip)
+func RateLimitMiddleware(rps float64, burst int) func(http.Handler) http.Handler {
+	if rps == 0 {
+		rps = 100
+	}
+	if burst == 0 {
+		burst = 200
+	}
+	rl := &RateLimiter{buckets: make(map[string]*Bucket), rps: rps, burst: burst}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			key := r.Header.Get("X-User")
+			if key == "" {
+				key = r.RemoteAddr
 			}
-		}
-		rl.mu.Unlock()
+			if !rl.Allow(key) {
+				w.Header().Set("Retry-After", "1")
+				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
 	}
 }

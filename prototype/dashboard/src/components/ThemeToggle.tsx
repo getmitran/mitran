@@ -1,25 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react';
 
-export function ThemeToggle() {
-  const [dark, setDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('mitran-theme') !== 'light'
-    }
-    return true
-  })
+type Theme = 'dark' | 'light';
+
+export default function ThemeToggle() {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const stored = localStorage.getItem('mitran-theme') as Theme | null;
+    if (stored) return stored;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  });
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark)
-    localStorage.setItem('mitran-theme', dark ? 'dark' : 'light')
-  }, [dark])
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('mitran-theme', theme);
+  }, [theme]);
 
   return (
     <button
-      onClick={() => setDark(!dark)}
-      className="p-2 rounded-md hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-      title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      style={{
+        background: 'var(--card)',
+        color: 'var(--text)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '6px 10px',
+        cursor: 'pointer',
+        fontSize: '1.1rem',
+        lineHeight: 1,
+      }}
     >
-      {dark ? '☀️' : '🌙'}
+      {theme === 'dark' ? '☀️' : '🌙'}
     </button>
-  )
+  );
 }
