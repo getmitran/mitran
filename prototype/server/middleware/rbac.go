@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"mitran/auth"
+	"github.com/getmitran/mitran/server/auth"
 )
 
 type Role string

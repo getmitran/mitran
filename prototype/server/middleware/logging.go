@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"mitran/metrics"
+	"github.com/getmitran/mitran/server/metrics"
 )
 
 var M *metrics.Metrics
