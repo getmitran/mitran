@@ -1,73 +1,35 @@
 # Contributing to Mitran
 
-Thank you for your interest in contributing! Here's how to get started.
+Thank you for your interest in contributing to Mitran!
 
 ## Development Setup
 
-```bash
-# Prerequisites
-go 1.22+
-python 3.11+
-node 18+ (for dashboard)
+1. Clone the repo: `git clone https://github.com/getmitran/mitran.git`
+2. Copy env: `cp .env.example .env` and fill in values
+3. Install deps: `make install-deps`
+4. Run: `make run`
 
-# Clone
-git clone https://github.com/getmitran/mitran.git
-cd mitran
+## Architecture
 
-# Build core engine
-go build ./cmd/mitran
+- **Engine** (Go): DAG scheduler, REST API, WebSocket hub -- port 7780
+- **Agent Worker** (Python): 8 AI agents using AWS Bedrock -- port 8888
+- **Dashboard** (React): Vite + Tailwind -- port 5173 (dev) / 3000 (prod)
+- **CLI** (Go): `mitran init`, `mitran status`
 
-# Run tests
-go test ./...
+## Workflow
 
-# Run agents (Python)
-cd agents
-pip install -e .
-```
-
-## Project Structure
-
-```
-mitran/
-├── cmd/mitran/          # CLI entrypoint
-├── internal/            # Core engine (Go)
-│   ├── engine/          # DAG, queue, executor
-│   ├── agent/           # Agent runtime, ACLs
-│   ├── checkpoint/      # State persistence
-│   ├── integration/     # GitHub, Slack, Grafana
-│   └── api/             # gRPC + REST + WebSocket
-├── agents/              # Agent implementations (Python)
-├── dashboard/           # Web UI (TypeScript/React)
-└── docs/                # Documentation
-```
-
-## How to Contribute
-
-### Bug Reports
-Open an issue with:
-- Steps to reproduce
-- Expected vs actual behavior
-- Mitran version (`mitran --version`)
-
-### Feature Requests
-Open a discussion first. Describe the problem you're solving, not just the solution.
-
-### Pull Requests
 1. Fork the repo
-2. Create a branch (`git checkout -b feat/my-feature`)
-3. Make changes
-4. Run tests (`go test ./...`)
-5. Submit PR with clear description
-
-### Writing Agents
-See the [Agent SDK docs](docs/agent-sdk.md) for creating custom agents.
+2. Create a branch: `git checkout -b feat/my-feature`
+3. Make changes and test: `make test`
+4. Commit (conventional commits): `git commit -m "feat: add X"`
+5. Push and open a PR
 
 ## Code Style
 
-- **Go:** `gofmt` + `golangci-lint`
-- **Python:** `ruff` + `black`
-- **TypeScript:** `eslint` + `prettier`
+- Go: `gofmt` + `golangci-lint`
+- Python: PEP 8, type hints preferred
+- TypeScript: Strict mode, no `any` where avoidable
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under AGPL-3.0.
+AGPL-3.0 -- see LICENSE
