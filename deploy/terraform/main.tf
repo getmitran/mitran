@@ -35,17 +35,17 @@ resource "aws_security_group" "mitran" {
   vpc_id = data.aws_vpc.default.id
 
   ingress {
-    from_port   = 7780
-    to_port     = 7780
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 7780
+    to_port   = 7780
+    protocol  = "tcp"
+    self      = true
   }
 
   ingress {
-    from_port   = 8888
-    to_port     = 8888
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port = 8888
+    to_port   = 8888
+    protocol  = "tcp"
+    self      = true
   }
 
   ingress {

@@ -109,10 +109,8 @@ func (q *FileQueue) Dequeue() (*Task, error) {
 }
 
 func (q *FileQueue) rewrite() error {
-	if err := q.file.Close(); err != nil {
-		return err
-	}
-	f, err := os.Create(q.path)
+	tmp := q.path + ".tmp"
+	f, err := os.Create(tmp)
 	if err != nil {
 		return err
 	}
@@ -120,7 +118,12 @@ func (q *FileQueue) rewrite() error {
 		data, _ := json.Marshal(t)
 		f.Write(append(data, '\n'))
 	}
-	q.file = f
+	f.Close()
+	if err := os.Rename(tmp, q.path); err != nil {
+		return err
+	}
+	q.file.Close()
+	q.file, _ = os.OpenFile(q.path, os.O_RDWR|os.O_APPEND, 0644)
 	return nil
 }
 

@@ -10,7 +10,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). We are committ
 
 ### Prerequisites
 
-- Go 1.21+
+- Go 1.22+
 - Python 3.11+
 - Node.js 20+
 - Docker (for local services)
