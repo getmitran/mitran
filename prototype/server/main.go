@@ -12,6 +12,7 @@ import (
 	"github.com/getmitran/mitran/server/handlers"
 	"github.com/getmitran/mitran/server/middleware"
 	"github.com/getmitran/mitran/server/scheduler"
+	"github.com/getmitran/mitran/server/workspace"
 )
 
 func main() {
@@ -26,6 +27,13 @@ func main() {
 		log.Fatalf("Failed to initialize store: %v", err)
 	}
 
+	// Project workspaces
+	wsDir := filepath.Join(dataDir, "projects")
+	wsMgr, err := workspace.New(wsDir)
+	if err != nil {
+		log.Fatalf("Failed to initialize workspace manager: %v", err)
+	}
+
 	// Handlers
 	mux := http.NewServeMux()
 
@@ -35,7 +43,7 @@ func main() {
 	mux.Handle("/api/v1/checkpoints/", &handlers.CheckpointHandler{Store: store})
 	mux.Handle("/api/v1/agents", &handlers.AgentHandler{Store: store})
 	mux.Handle("/api/v1/agents/", &handlers.AgentHandler{Store: store})
-	mux.Handle("/api/v1/init", &handlers.InitHandler{Store: store})
+	mux.Handle("/api/v1/init", &handlers.InitHandler{Store: store, Workspace: wsMgr})
 
 	// Environment & Pipeline handlers (project sub-resources)
 	// These need to be registered BEFORE the catch-all /api/v1/projects/ 
@@ -63,7 +71,7 @@ func main() {
 	})
 
 	// Start scheduler
-	sched := &scheduler.Scheduler{Store: store}
+	sched := &scheduler.Scheduler{Store: store, WorkspaceDir: wsDir}
 	sched.Start()
 
 	port := "7777"

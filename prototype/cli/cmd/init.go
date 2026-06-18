@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/promptui"
@@ -34,10 +36,10 @@ func init() {
 }
 
 type initRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Languages   string `json:"languages"`
-	TeamSize    string `json:"team_size"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Languages   []string `json:"languages"`
+	TeamSize    int      `json:"team_size"`
 }
 
 type taskResponse struct {
@@ -62,8 +64,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 	payload := initRequest{
 		Name:        name,
 		Description: description,
-		Languages:   stack,
-		TeamSize:    engineers,
+		Languages:   splitLanguages(stack),
+		TeamSize:    parseIntOr(engineers, 5),
 	}
 	body, _ := json.Marshal(payload)
 
@@ -133,6 +135,26 @@ func fetchCheckpoints() []taskResponse {
 	body, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(body, &cps)
 	return cps
+}
+
+func splitLanguages(s string) []string {
+	parts := strings.Split(s, ",")
+	var out []string
+	for _, p := range parts {
+		t := strings.TrimSpace(p)
+		if t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+func parseIntOr(s string, fallback int) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil {
+		return fallback
+	}
+	return n
 }
 
 func prompt(label string) string {

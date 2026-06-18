@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/getmitran/mitran/server/db"
+	"github.com/getmitran/mitran/server/workspace"
 )
 
 type InitHandler struct {
-	Store *db.Store
+	Store     *db.Store
+	Workspace *workspace.Manager
 }
 
 type initReq struct {
@@ -54,6 +56,17 @@ func (h *InitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Initialize project workspace directory
+	wsPath := ""
+	if h.Workspace != nil {
+		var err error
+		wsPath, err = h.Workspace.Init(project.ID, project.Name)
+		if err != nil {
+			writeErr(w, http.StatusInternalServerError, "workspace init: "+err.Error())
+			return
+		}
+	}
+
 	// Generate task plan with DAG dependencies
 	plan := generatePlan(project)
 
@@ -80,9 +93,10 @@ func (h *InitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"project": project,
-		"plan":    plan,
-		"tasks":   len(tasks),
+		"project":        project,
+		"plan":           plan,
+		"tasks":          len(tasks),
+		"workspace_path": wsPath,
 	})
 }
 

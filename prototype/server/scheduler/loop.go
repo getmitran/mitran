@@ -12,7 +12,8 @@ import (
 )
 
 type Scheduler struct {
-	Store *db.Store
+	Store        *db.Store
+	WorkspaceDir string // base dir for project workspaces
 }
 
 func (s *Scheduler) Start() {
@@ -111,19 +112,43 @@ func (s *Scheduler) tick() {
 	s.Store.Save()
 
 	// Notify agent via callback
-	go notifyAgent(agent.CallbackURL, task)
+	go s.notifyAgent(agent.CallbackURL, task)
 }
 
-func notifyAgent(url string, task *db.Task) {
+func (s *Scheduler) notifyAgent(url string, task *db.Task) {
 	if url == "" {
 		return
 	}
+
+	// Find project for context
+	var project *db.Project
+	for i := range s.Store.Projects {
+		if s.Store.Projects[i].ID == task.ProjectID {
+			project = &s.Store.Projects[i]
+			break
+		}
+	}
+
+	workspacePath := ""
+	if s.WorkspaceDir != "" && task.ProjectID != "" {
+		workspacePath = s.WorkspaceDir + "/" + task.ProjectID
+	}
+
+	context := map[string]any{}
+	if project != nil {
+		context["project_name"] = project.Name
+		context["description"] = project.Description
+		context["languages"] = project.Languages
+		context["team_size"] = project.TeamSize
+	}
+
 	payload, _ := json.Marshal(map[string]any{
-		"task_id":     task.ID,
-		"title":       task.Title,
-		"description": task.Description,
-		"agent_type":  task.AgentType,
-		"project_id":  task.ProjectID,
+		"task_id":        task.ID,
+		"task":           task.Title,
+		"agent":          task.AgentType,
+		"project_id":     task.ProjectID,
+		"workspace_path": workspacePath,
+		"context":        context,
 	})
 	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {

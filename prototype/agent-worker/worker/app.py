@@ -48,21 +48,31 @@ def execute():
     agent_name = data.get("agent", "dev")
     task_description = data.get("task", "")
     context = data.get("context", {})
+    workspace_path = data.get("workspace_path", "")
 
     agent = AGENTS.get(agent_name)
     if not agent:
         return jsonify({"error": f"Unknown agent: {agent_name}"}), 404
 
+    # Pass workspace path to agent context so it knows where to write files
+    if workspace_path:
+        context["workspace_path"] = workspace_path
+
     log.info(f"Executing task {task_id} with agent '{agent_name}': {task_description[:80]}")
+    if workspace_path:
+        log.info(f"  Project workspace: {workspace_path}")
 
     try:
         result: AgentResult = agent.execute(task_description, context)
     except RuntimeError as e:
         error_msg = str(e)
         log.error(f"Agent {agent_name} failed: {error_msg}")
-        # Post failure back to engine
         _post_result(task_id, {"status": "failed", "error": error_msg})
         return jsonify({"error": error_msg}), 500
+
+    # Write agent output files to project workspace
+    if workspace_path and result.files:
+        _write_to_workspace(workspace_path, result.files)
 
     # Post success result back to engine
     checkpoint = {
@@ -73,6 +83,17 @@ def execute():
     _post_result(task_id, checkpoint)
 
     return jsonify({"status": "completed", "summary": result.summary, "file_count": len(result.files)})
+
+
+def _write_to_workspace(workspace_path: str, files):
+    """Persist agent-generated files to the project workspace directory."""
+    import os
+    for f in files:
+        full_path = os.path.join(workspace_path, f.path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w") as fh:
+            fh.write(f.content or "")
+        log.info(f"  Wrote: {full_path}")
 
 
 def _post_result(task_id: str, checkpoint: dict):
