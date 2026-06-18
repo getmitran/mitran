@@ -1,8 +1,9 @@
-import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings } from 'lucide-react'
+import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings, MessageSquare } from 'lucide-react'
 
 const nav = [
   { id: 'queue', label: 'Queue', icon: ListOrdered },
   { id: 'kanban', label: 'Kanban', icon: LayoutGrid },
+  { id: 'chat', label: 'Chat', icon: MessageSquare },
   { id: 'agents', label: 'Agents', icon: Bot },
   { id: 'checkpoints', label: 'Checkpoints', icon: ShieldCheck },
   { id: 'tickets', label: 'Tickets', icon: Ticket },
