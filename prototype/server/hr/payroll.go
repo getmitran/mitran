@@ -79,7 +79,10 @@ func (s *PayrollStore) ListPayslips(empID string) []Payslip {
 func (s *PayrollStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/hr/payroll/salary", func(w http.ResponseWriter, r *http.Request) {
 		var st SalaryStructure
-		json.NewDecoder(r.Body).Decode(&st)
+		if err := json.NewDecoder(r.Body).Decode(&st); err != nil {
+			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 		s.SetSalary(st.EmployeeID, st)
 		json.NewEncoder(w).Encode(st)
 	})

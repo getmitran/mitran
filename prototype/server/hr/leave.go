@@ -75,7 +75,10 @@ func (s *LeaveStore) ListPending() (out []*LeaveRequest) {
 func (s *LeaveStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/hr/leave", func(w http.ResponseWriter, r *http.Request) {
 		var req LeaveRequest
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 		id := s.Submit(&req)
 		json.NewEncoder(w).Encode(map[string]string{"id": id})
 	})

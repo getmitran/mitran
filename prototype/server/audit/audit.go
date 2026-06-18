@@ -50,7 +50,9 @@ func (a *AuditLog) Log(e AuditEntry) error {
 	return json.NewEncoder(f).Encode(e)
 }
 
-func (a *AuditLog) readAll() []AuditEntry {
+// readAllLocked reads all entries from the audit log file.
+// Caller must hold a.mu.
+func (a *AuditLog) readAllLocked() []AuditEntry {
 	f, err := os.Open(a.path)
 	if err != nil {
 		return nil
@@ -68,8 +70,10 @@ func (a *AuditLog) readAll() []AuditEntry {
 }
 
 func (a *AuditLog) Query(filter AuditFilter) []AuditEntry {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	var result []AuditEntry
-	for _, e := range a.readAll() {
+	for _, e := range a.readAllLocked() {
 		if filter.UserID != "" && e.UserID != filter.UserID {
 			continue
 		}
@@ -88,7 +92,9 @@ func (a *AuditLog) Query(filter AuditFilter) []AuditEntry {
 }
 
 func (a *AuditLog) Recent(n int) []AuditEntry {
-	all := a.readAll()
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	all := a.readAllLocked()
 	if len(all) <= n {
 		return all
 	}

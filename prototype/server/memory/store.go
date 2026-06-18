@@ -49,8 +49,8 @@ func NewStore(dataDir string) (*MemoryStore, error) {
 func (s *MemoryStore) SetFact(key, value string) {
 	s.mu.Lock()
 	s.Facts[key] = value
+	s.writeFile("semantic.json", s.Facts)
 	s.mu.Unlock()
-	s.saveFacts()
 }
 
 func (s *MemoryStore) GetFact(key string) (string, bool) {
@@ -77,8 +77,8 @@ func (s *MemoryStore) AddEpisode(text string) EpisodicEntry {
 	e := EpisodicEntry{ID: genID(), Text: text, Timestamp: time.Now()}
 	s.mu.Lock()
 	s.Episodes = append(s.Episodes, e)
+	s.writeFile("episodes.json", s.Episodes)
 	s.mu.Unlock()
-	s.saveEpisodes()
 	return e
 }
 
@@ -99,8 +99,8 @@ func (s *MemoryStore) AddCorrection(rule, negative, category string) Correction 
 	c := Correction{ID: genID(), Rule: rule, Negative: negative, Category: category}
 	s.mu.Lock()
 	s.Corrections = append(s.Corrections, c)
+	s.writeFile("corrections.json", s.Corrections)
 	s.mu.Unlock()
-	s.saveCorrections()
 	return c
 }
 
@@ -115,8 +115,8 @@ func (s *MemoryStore) RemoveCorrection(id string) bool {
 	for i, c := range s.Corrections {
 		if c.ID == id {
 			s.Corrections = append(s.Corrections[:i], s.Corrections[i+1:]...)
+			s.writeFile("corrections.json", s.Corrections)
 			s.mu.Unlock()
-			s.saveCorrections()
 			return true
 		}
 	}
@@ -136,24 +136,6 @@ func (s *MemoryStore) loadFile(name string, target interface{}) {
 		return
 	}
 	json.Unmarshal(data, target)
-}
-
-func (s *MemoryStore) saveFacts() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	s.writeFile("semantic.json", s.Facts)
-}
-
-func (s *MemoryStore) saveEpisodes() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	s.writeFile("episodes.json", s.Episodes)
-}
-
-func (s *MemoryStore) saveCorrections() {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	s.writeFile("corrections.json", s.Corrections)
 }
 
 func (s *MemoryStore) writeFile(name string, data interface{}) {

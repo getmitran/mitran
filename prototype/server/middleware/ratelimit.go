@@ -19,11 +19,23 @@ type RateLimiter struct {
 	buckets map[string]*Bucket
 	rps     float64
 	burst   int
+	calls   int
 }
 
 func (rl *RateLimiter) Allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
+
+	rl.calls++
+	if rl.calls%1000 == 0 {
+		cutoff := time.Now().Add(-10 * time.Minute)
+		for k, b := range rl.buckets {
+			if b.lastTime.Before(cutoff) {
+				delete(rl.buckets, k)
+			}
+		}
+	}
+
 	b, ok := rl.buckets[key]
 	if !ok {
 		b = &Bucket{tokens: float64(rl.burst), max: float64(rl.burst), refill: rl.rps, lastTime: time.Now()}

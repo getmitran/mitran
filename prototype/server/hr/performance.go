@@ -79,7 +79,10 @@ func RegisterReviewRoutes(mux *http.ServeMux, store *ReviewStore) {
 	})
 	mux.HandleFunc("POST /api/v1/hr/reviews", func(w http.ResponseWriter, r *http.Request) {
 		var rev Review
-		json.NewDecoder(r.Body).Decode(&rev)
+		if err := json.NewDecoder(r.Body).Decode(&rev); err != nil {
+			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 		json.NewEncoder(w).Encode(store.SubmitSelfReview(rev))
 	})
 	mux.HandleFunc("PUT /api/v1/hr/reviews/{id}", func(w http.ResponseWriter, r *http.Request) {

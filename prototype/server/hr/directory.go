@@ -86,7 +86,10 @@ func (d *Directory) Handler(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == "POST":
 		var e Employee
-		json.NewDecoder(r.Body).Decode(&e)
+		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
+			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 		d.Add(e)
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(e)
