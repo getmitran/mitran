@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -119,6 +120,49 @@ type ProjectEnvironments struct {
 	Environments []Environment `json:"environments"`
 }
 
+type Ticket struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Status      string    `json:"status"`
+	Priority    string    `json:"priority"`
+	Assignee    string    `json:"assignee"`
+	Labels      []string  `json:"labels"`
+	SprintID    string    `json:"sprint_id"`
+	SLADueAt    *time.Time `json:"sla_due_at,omitempty"`
+	CreatedBy   string    `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type TicketComment struct {
+	ID        string    `json:"id"`
+	TicketID  string    `json:"ticket_id"`
+	Author    string    `json:"author"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Sprint struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	StartDate string    `json:"start_date"`
+	EndDate   string    `json:"end_date"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type WikiPage struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	ParentID  string    `json:"parent_id"`
+	Slug      string    `json:"slug"`
+	CreatedBy string    `json:"created_by"`
+	Tags      []string  `json:"tags"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Store struct {
 	Mu                  sync.RWMutex // exported via accessor below
 	dir                 string
@@ -131,6 +175,10 @@ type Store struct {
 	Pipelines           []Pipeline            `json:"pipelines"`
 	PipelineRuns        []PipelineRun         `json:"pipeline_runs"`
 	Deployments         []Deployment          `json:"deployments"`
+	Tickets             []Ticket              `json:"tickets"`
+	TicketComments      []TicketComment       `json:"ticket_comments"`
+	Sprints             []Sprint              `json:"sprints"`
+	WikiPages           []WikiPage            `json:"wiki_pages"`
 }
 
 func NewStore(dir string) (*Store, error) {
@@ -430,4 +478,191 @@ func (s *Store) ListDeployments(projectID string) []Deployment {
 		}
 	}
 	return result
+}
+
+// --- Ticket methods ---
+
+func (s *Store) AddTicket(t Ticket) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.Tickets = append(s.Tickets, t)
+	return s.Save()
+}
+
+func (s *Store) GetTicket(id string) *Ticket {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	for i := range s.Tickets {
+		if s.Tickets[i].ID == id {
+			return &s.Tickets[i]
+		}
+	}
+	return nil
+}
+
+func (s *Store) UpdateTicket(id string, fn func(*Ticket)) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.Tickets {
+		if s.Tickets[i].ID == id {
+			fn(&s.Tickets[i])
+			return s.Save()
+		}
+	}
+	return fmt.Errorf("ticket %s not found", id)
+}
+
+func (s *Store) DeleteTicket(id string) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.Tickets {
+		if s.Tickets[i].ID == id {
+			s.Tickets = append(s.Tickets[:i], s.Tickets[i+1:]...)
+			return s.Save()
+		}
+	}
+	return fmt.Errorf("ticket %s not found", id)
+}
+
+func (s *Store) ListTickets(status, assignee, sprintID, labels string) []Ticket {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []Ticket
+	for _, t := range s.Tickets {
+		if status != "" && t.Status != status {
+			continue
+		}
+		if assignee != "" && t.Assignee != assignee {
+			continue
+		}
+		if sprintID != "" && t.SprintID != sprintID {
+			continue
+		}
+		if labels != "" {
+			found := false
+			for _, l := range t.Labels {
+				if l == labels {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+		result = append(result, t)
+	}
+	return result
+}
+
+func (s *Store) AddTicketComment(c TicketComment) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.TicketComments = append(s.TicketComments, c)
+	return s.Save()
+}
+
+func (s *Store) ListTicketComments(ticketID string) []TicketComment {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []TicketComment
+	for _, c := range s.TicketComments {
+		if c.TicketID == ticketID {
+			result = append(result, c)
+		}
+	}
+	return result
+}
+
+// --- Sprint methods ---
+
+func (s *Store) AddSprint(sp Sprint) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.Sprints = append(s.Sprints, sp)
+	return s.Save()
+}
+
+func (s *Store) ListSprints() []Sprint {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	return s.Sprints
+}
+
+func (s *Store) UpdateSprint(id string, fn func(*Sprint)) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.Sprints {
+		if s.Sprints[i].ID == id {
+			fn(&s.Sprints[i])
+			return s.Save()
+		}
+	}
+	return fmt.Errorf("sprint %s not found", id)
+}
+
+// --- Wiki methods ---
+
+func (s *Store) AddWikiPage(p WikiPage) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	s.WikiPages = append(s.WikiPages, p)
+	return s.Save()
+}
+
+func (s *Store) GetWikiPage(id string) *WikiPage {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	for i := range s.WikiPages {
+		if s.WikiPages[i].ID == id {
+			return &s.WikiPages[i]
+		}
+	}
+	return nil
+}
+
+func (s *Store) UpdateWikiPage(id string, fn func(*WikiPage)) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.WikiPages {
+		if s.WikiPages[i].ID == id {
+			fn(&s.WikiPages[i])
+			return s.Save()
+		}
+	}
+	return fmt.Errorf("wiki page %s not found", id)
+}
+
+func (s *Store) DeleteWikiPage(id string) error {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	for i := range s.WikiPages {
+		if s.WikiPages[i].ID == id {
+			s.WikiPages = append(s.WikiPages[:i], s.WikiPages[i+1:]...)
+			return s.Save()
+		}
+	}
+	return fmt.Errorf("wiki page %s not found", id)
+}
+
+func (s *Store) ListWikiPages() []WikiPage {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	return s.WikiPages
+}
+
+func (s *Store) SearchWikiPages(query string) []WikiPage {
+	s.Mu.RLock()
+	defer s.Mu.RUnlock()
+	var result []WikiPage
+	for _, p := range s.WikiPages {
+		if containsLower(p.Title, query) || containsLower(p.Content, query) {
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+func containsLower(s, sub string) bool {
+	return len(s) >= len(sub) && strings.Contains(strings.ToLower(s), sub)
 }

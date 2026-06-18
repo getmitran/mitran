@@ -10,9 +10,11 @@ import (
 
 	"github.com/getmitran/mitran/server/db"
 	"github.com/getmitran/mitran/server/handlers"
+	"github.com/getmitran/mitran/server/memory"
 	"github.com/getmitran/mitran/server/middleware"
 	"github.com/getmitran/mitran/server/scheduler"
 	"github.com/getmitran/mitran/server/settings"
+	"github.com/getmitran/mitran/server/websocket"
 	"github.com/getmitran/mitran/server/workspace"
 )
 
@@ -39,6 +41,22 @@ func main() {
 
 	// Handlers
 	mux := http.NewServeMux()
+
+	// WebSocket hub for real-time events
+	hub := websocket.NewHub()
+	mux.HandleFunc("/api/v1/ws", websocket.HandleWS(hub))
+
+	// Memory system
+	memStore, err := memory.NewStore(filepath.Join(dataDir, "memory"))
+	if err != nil {
+		log.Fatalf("Failed to initialize memory: %v", err)
+	}
+	memHandler := &memory.Handler{Store: memStore}
+	mux.Handle("/api/v1/memory/facts", memHandler)
+	mux.Handle("/api/v1/memory/search", memHandler)
+	mux.Handle("/api/v1/memory/episodes", memHandler)
+	mux.Handle("/api/v1/memory/corrections", memHandler)
+	mux.Handle("/api/v1/memory/corrections/", memHandler)
 
 	mux.Handle("/api/v1/tasks", &handlers.TaskHandler{Store: store})
 	mux.Handle("/api/v1/tasks/", &handlers.TaskHandler{Store: store})
@@ -109,6 +127,8 @@ func main() {
 	fmt.Printf("    GET  /api/v1/checkpoints   Pending checkpoints\n")
 	fmt.Printf("    GET  /api/v1/projects      List projects\n")
 	fmt.Printf("    GET  /api/v1/settings      Configuration\n")
+	fmt.Printf("    GET  /api/v1/memory/facts   Memory facts\n")
+	fmt.Printf("    WS   /api/v1/ws            WebSocket (real-time)\n")
 	fmt.Printf("    GET  /health               Health check\n\n")
 	fmt.Printf("  Data: %s\n\n", dataDir)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
