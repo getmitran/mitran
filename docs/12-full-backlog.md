@@ -215,3 +215,154 @@
 | **Total** | **100** | |
 
 **100 tasks. 20 people. 13 sprints. Zero mocks. v0.1.0.**
+
+
+## REMAINING v0.1.0 SCOPE (Not Yet Built)
+
+### OpenClaw Runtime Features
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 101 | Vector memory store | Embedded Qdrant/ChromaDB replacing JSON string matching. Semantic similarity search over facts+episodes. | P0 |
+| 102 | Skill loader | Read SKILL.md files from workspace, inject into agent system prompts dynamically. Per-agent skill assignment. | P0 |
+| 103 | Tool approval system | 3-tier model (interactive/reads/yolo). Per-agent configurable. Dashboard approval queue UI. | P0 |
+| 104 | Artifact store | Versioned content store (widgets/HTML/md). CRUD API, version history, slug-based addressing. | P0 |
+| 105 | Agent read-back | Before generating, agents read prior outputs. Context window management with sliding window + summarization. | P1 |
+| 106 | Memory write-back | After task completion, agents auto-persist learnings to memory store. | P1 |
+| 107 | LLM abstraction layer | Support Bedrock + OpenAI + Anthropic direct + Ollama. Provider-agnostic interface with model routing. | P0 |
+| 108 | MCP server lifecycle | Auto-start configured MCP servers as child processes. Health monitoring, restart on crash. | P0 |
+| 109 | Process supervisor | Monitor Python workers. Auto-restart on crash. Health pings. Multiple instances with load balancing. | P1 |
+| 110 | Snapshot/restore system | Full state backup (memory, sessions, config, artifacts, crons). Component-level restore. | P1 |
+
+### HR Portal (Full App)
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 111 | HR Portal dashboard page | Full React page: employee directory, PTO calendar, onboarding tracker, policy library. | P1 |
+| 112 | PTO request system | Submit requests with date picker, type selection, auto-calculate balance, manager approval workflow. | P1 |
+| 113 | Onboarding checklists | Template-based flows. Assign to new hire. Track completion. Auto-create tasks in ticketing. | P1 |
+| 114 | Policy library | CRUD for company policies (markdown). Versioned. Searchable. HR agent uses as context. | P2 |
+| 115 | Employee directory | Team members with role, department, start date, manager. Org chart view. | P2 |
+| 116 | PTO balance tracking | Per-employee accrual, usage history, remaining balance. Year-end rollover rules. | P2 |
+
+### CLI Commands
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 117 | mitran serve | Start engine + all workers + print status table. Watch for crashes. Single command. | P0 |
+| 118 | mitran chat | REPL-mode conversational interface. Agent selector. Streaming responses. History. | P0 |
+| 119 | mitran tui | Terminal UI (Bubble Tea). Split panes: chat + task list + agent status. | P1 |
+| 120 | mitran status | Live stats: running agents, queued tasks, memory entries, cron jobs, uptime, worker health. | P1 |
+| 121 | mitran config get/set | Read/write settings from CLI. Dot-notation keys. JSON output. | P2 |
+| 122 | mitran agent list/create/delete | Manage agent configs from CLI. Hot-reload on change. | P2 |
+| 123 | mitran workspace list/create/switch | Multi-project. Each workspace = isolated memory + sessions + config. | P1 |
+| 124 | mitran cron add/list/pause/trigger | Full cron management from CLI. | P2 |
+| 125 | mitran snapshot/restore | CLI interface to snapshot system. Component selection. Dry-run. | P2 |
+| 126 | mitran app install/enable/disable | Install MCP apps from local dirs or marketplace. | P2 |
+
+### Apps Ecosystem
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 127 | App manifest spec (app.json) | Define format: name, version, permissions, UI components, crons, skills. | P1 |
+| 128 | App install from directory | Read app.json, validate, copy to store, register routes/crons/skills. | P1 |
+| 129 | App enable/disable per workspace | Workspace-scoped activation. | P2 |
+| 130 | App registry API | List installed, search marketplace, version checking, updates. | P2 |
+| 131 | App template generator | mitran app init scaffolds app.json + entry + sample skill + cron. | P2 |
+| 132 | App marketplace scaffold | Remote registry API structure for community apps. | P2 |
+
+### Dashboard Pages (Missing)
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 133 | Memory viewer page | Browse facts, episodes, corrections. Search. Add/edit/delete. Timeline. | P1 |
+| 134 | Cron manager page | List jobs, pause/resume, trigger, run history, create new with form. | P1 |
+| 135 | Artifact library page | Grid/list of artifacts. Preview. Version dropdown. Tag filtering. | P1 |
+| 136 | MCP Registry page | Connected servers with status. Tool browser. Enable/disable. Add form. | P1 |
+| 137 | Agent config editor | Monaco editor for agent-spec. Skills assignment. Model select. Test prompt. | P2 |
+| 138 | Security log viewer | Filterable audit trail. Action type, agent, timestamp. Export CSV. | P2 |
+
+### Real Integrations
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 139 | Prometheus bundling | Ship binary. Auto-generate scrape config. Child process. /metrics endpoints. | P1 |
+| 140 | Grafana bundling | Ship binary. Auto-provision datasource. Pre-built agent dashboards. | P1 |
+| 141 | Monitoring dashboard page | Embed Grafana iframes. Auto-generated per-agent panels. | P2 |
+| 142 | Slack slash commands | /mitran status, approve, reject, chat. Real Slack app manifest. | P1 |
+| 143 | GitHub webhooks inbound | Receive PR/issue/push events. Route to appropriate agents. Auto-review PRs. | P1 |
+
+### Agent Enhancements (Real Capabilities)
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 144 | Ops Agent real Grafana | Creates actual Grafana dashboard JSON via API. | P1 |
+| 145 | Ops Agent real alerting | Define alert rules, notification channels, escalation policies. | P2 |
+| 146 | Tickets Agent SLA enforcement | Track SLA per priority. Auto-escalate overdue. Breach notifications. | P1 |
+| 147 | Tickets Agent sprint planning | AI-suggested scope from backlog, velocity estimation, workload balance. | P2 |
+| 148 | Wiki Agent incident runbooks | Auto-generate runbooks from incident history. Link to dashboards/alerts. | P2 |
+| 149 | HR Agent PTO approval workflow | Receive requests, check balance, route to manager, update calendar. | P1 |
+| 150 | Review Agent security scan | Run actual semgrep/gosec, parse results, create tickets for findings. | P1 |
+
+### Enterprise Prep
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 151 | SSO/SAML integration | OAuth2 + SAML provider. Enterprise IdP connection. Role mapping. | P2 |
+| 152 | Multi-tenant isolation | Per-org data separation. Org-scoped agents, memory, sessions. | P2 |
+| 153 | PostgreSQL backend | Replace SQLite for production. Migration tool. Connection pooling. | P2 |
+| 154 | Audit log export | CSV/JSON export. Compliance format. Retention policies. Signed logs. | P2 |
+| 155 | Usage metering | Track LLM tokens per user/agent, API calls, storage. Billing-ready. | P2 |
+
+### DevRel and Launch
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 156 | Documentation site | Docusaurus/MkDocs on getmitran.dev. Auto-deploy. Search. Versioned. | P1 |
+| 157 | Install script | curl pipe sh. Detects OS, installs Go/Python/Node deps, downloads binary. | P0 |
+| 158 | Binary builds (goreleaser) | Multi-arch Go binaries. GitHub Release artifacts. Homebrew formula. | P1 |
+| 159 | Tutorial 5 min quickstart | Install to first agent output. With screenshots. | P1 |
+| 160 | Demo video 2 min | Professional recording: init, agents working, PR created, dashboard. | P0 |
+| 161 | HN launch post | Show HN draft + timing strategy. | P1 |
+| 162 | Discord community | Server, channels, roles, welcome bot, contributor guidelines. | P2 |
+| 163 | Buy getmitran.dev | Domain + DNS + email forwarding. | P1 |
+| 164 | Social presence | Twitter @getmitran. First 10 posts. GitHub social preview. Badges. | P2 |
+
+### Testing and Quality
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 165 | Go unit tests 80 pct coverage | Cover all packages fully. | P1 |
+| 166 | Python unit tests 80 pct coverage | Cover all agents and utilities fully. | P1 |
+| 167 | gRPC integration tests | Go to Python contract testing. Mock LLM for deterministic results. | P1 |
+| 168 | Dashboard E2E tests (Playwright) | Init wizard, task creation, kanban, chat, settings, navigation. | P2 |
+| 169 | Chaos testing | Kill workers mid-task, network partition, OOM. Verify recovery. | P2 |
+| 170 | Performance benchmarks | 100 concurrent tasks. Scheduler throughput. Published results. | P2 |
+
+### Design and Branding
+
+| # | Task | Description | Priority |
+|---|------|-------------|----------|
+| 171 | Logo design | Icon + wordmark + favicon. SVG. Dark/light variants. | P1 |
+| 172 | Dashboard theme finalization | Consistent colors, typography, spacing. Design tokens. | P1 |
+| 173 | Component library | Reusable: Button, Card, Modal, Form, Select, Toast. Storybook. | P2 |
+| 174 | Landing page v2 | With logo, screenshots, feature grid, comparison, CTA. | P1 |
+| 175 | Social cards | OG images for GitHub, Twitter, HN. Template. | P2 |
+
+## Updated Summary
+
+| Category | Tasks | Status |
+|----------|-------|--------|
+| Completed (v0.1.0 built) | 1-100 | Done |
+| OpenClaw Runtime | 101-110 | Remaining |
+| HR Portal | 111-116 | Remaining |
+| CLI Commands | 117-126 | Remaining |
+| Apps Ecosystem | 127-132 | Remaining |
+| Dashboard Pages | 133-138 | Remaining |
+| Integrations | 139-143 | Remaining |
+| Agent Enhancements | 144-150 | Remaining |
+| Enterprise | 151-155 | Remaining |
+| DevRel | 156-164 | Remaining |
+| Testing | 165-170 | Remaining |
+| Design | 171-175 | Remaining |
+| **TOTAL** | **175** | 100 done, 75 remaining |
