@@ -9,12 +9,13 @@ import SettingsPage from './components/SettingsPage'
 import TicketingApp from './components/TicketingApp'
 import WikiApp from './components/WikiApp'
 import ChatInterface from './components/ChatInterface'
+import { SessionsPage } from './components/SessionsPage'
 import { api } from './api'
 import { usePolling } from './hooks/usePolling'
 import { mockTasks, mockAgents, mockCheckpoints } from './mock-data'
 import { Task, Agent, Checkpoint } from './types'
 
-type View = 'queue' | 'kanban' | 'chat' | 'agents' | 'checkpoints' | 'tickets' | 'wiki' | 'settings'
+type View = 'queue' | 'kanban' | 'chat' | 'sessions' | 'agents' | 'checkpoints' | 'tickets' | 'wiki' | 'settings'
 
 function normalize<T>(data: any[] | null, fallback: T[]): T[] {
   return data ?? fallback
@@ -49,6 +50,7 @@ export default function App() {
         {view === 'queue' && <PriorityQueue tasks={tasks} refetch={refetchTasks} />}
         {view === 'kanban' && <KanbanBoard tasks={tasks} refetch={refetchTasks} />}
         {view === 'chat' && <ChatInterface />}
+        {view === 'sessions' && <SessionsPage onResumeSession={(id, agent) => { setView('chat') }} />}
         {view === 'agents' && <AgentStatus agents={agents} />}
         {view === 'checkpoints' && <CheckpointReview checkpoints={checkpoints} refetch={refetchCps} />}
         {view === 'tickets' && <TicketingApp />}
