@@ -65,6 +65,9 @@ func RateLimitMiddleware(rps float64, burst int) func(http.Handler) http.Handler
 			if key == "" {
 				key = r.RemoteAddr
 			}
+			if tenant := r.Header.Get("X-Tenant-ID"); tenant != "" {
+				key = tenant + ":" + key
+			}
 			if !rl.Allow(key) {
 				w.Header().Set("Retry-After", "1")
 				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
