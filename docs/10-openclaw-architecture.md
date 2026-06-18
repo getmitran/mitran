@@ -1,3 +1,5 @@
+> **SUPERSEDED**: See [Architecture v2](10-openclaw-architecture-v2.md) for the current design.
+
 # Mitran — OpenClaw Integration Architecture
 
 ## 1. Overview
