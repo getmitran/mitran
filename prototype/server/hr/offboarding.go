@@ -17,11 +17,15 @@ type OffboardingFlow struct {
 	Tasks                                                             []OffboardTask
 }
 
-var (
-	offboardings = map[string]*OffboardingFlow{}
-	obMu         sync.RWMutex
-	obCounter    int
-)
+type OffboardingStore struct {
+	offboardings map[string]*OffboardingFlow
+	mu           sync.RWMutex
+	counter      int
+}
+
+func NewOffboardingStore() *OffboardingStore {
+	return &OffboardingStore{offboardings: map[string]*OffboardingFlow{}}
+}
 
 var offboardDefaults = []struct{ Title, Category string }{
 	{"Revoke system access", "it"}, {"Return laptop and equipment", "it"},
@@ -29,22 +33,22 @@ var offboardDefaults = []struct{ Title, Category string }{
 	{"Knowledge transfer", "team"}, {"Remove from all systems", "it"},
 }
 
-func Initiate(empID, lastDay, reason, initiatedBy string) *OffboardingFlow {
-	obMu.Lock()
-	defer obMu.Unlock()
-	obCounter++
-	f := &OffboardingFlow{ID: fmt.Sprintf("off-%d", obCounter), EmployeeID: empID, LastDay: lastDay, Reason: reason, Status: "initiated", InitiatedBy: initiatedBy, InitiatedAt: time.Now().Format(time.RFC3339)}
+func (s *OffboardingStore) Initiate(empID, lastDay, reason, initiatedBy string) *OffboardingFlow {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.counter++
+	f := &OffboardingFlow{ID: fmt.Sprintf("off-%d", s.counter), EmployeeID: empID, LastDay: lastDay, Reason: reason, Status: "initiated", InitiatedBy: initiatedBy, InitiatedAt: time.Now().Format(time.RFC3339)}
 	for i, t := range offboardDefaults {
 		f.Tasks = append(f.Tasks, OffboardTask{ID: fmt.Sprintf("task-%d", i+1), Title: t.Title, Category: t.Category, Status: "pending"})
 	}
-	offboardings[f.ID] = f
+	s.offboardings[f.ID] = f
 	return f
 }
 
-func CompleteOffboardTask(flowID, taskID string) error {
-	obMu.Lock()
-	defer obMu.Unlock()
-	f := offboardings[flowID]
+func (s *OffboardingStore) CompleteOffboardTask(flowID, taskID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f := s.offboardings[flowID]
 	if f == nil {
 		return fmt.Errorf("flow not found")
 	}
@@ -70,15 +74,16 @@ func CompleteOffboardTask(flowID, taskID string) error {
 }
 
 func RegisterOffboardingRoutes(mux *http.ServeMux) {
+	store := NewOffboardingStore()
 	mux.HandleFunc("POST /api/v1/hr/offboarding", func(w http.ResponseWriter, r *http.Request) {
 		var req struct{ EmployeeID, LastDay, Reason, InitiatedBy string }
 		json.NewDecoder(r.Body).Decode(&req)
-		json.NewEncoder(w).Encode(Initiate(req.EmployeeID, req.LastDay, req.Reason, req.InitiatedBy))
+		json.NewEncoder(w).Encode(store.Initiate(req.EmployeeID, req.LastDay, req.Reason, req.InitiatedBy))
 	})
 	mux.HandleFunc("GET /api/v1/hr/offboarding/{id}", func(w http.ResponseWriter, r *http.Request) {
-		obMu.RLock()
-		f := offboardings[r.PathValue("id")]
-		obMu.RUnlock()
+		store.mu.RLock()
+		f := store.offboardings[r.PathValue("id")]
+		store.mu.RUnlock()
 		if f == nil {
 			http.Error(w, "not found", 404)
 			return
@@ -86,7 +91,7 @@ func RegisterOffboardingRoutes(mux *http.ServeMux) {
 		json.NewEncoder(w).Encode(f)
 	})
 	mux.HandleFunc("PUT /api/v1/hr/offboarding/{id}/tasks/{taskId}", func(w http.ResponseWriter, r *http.Request) {
-		if err := CompleteOffboardTask(r.PathValue("id"), r.PathValue("taskId")); err != nil {
+		if err := store.CompleteOffboardTask(r.PathValue("id"), r.PathValue("taskId")); err != nil {
 			http.Error(w, err.Error(), 404)
 			return
 		}

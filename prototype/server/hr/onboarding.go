@@ -25,11 +25,15 @@ type OnboardingFlow struct {
 	StartDate  string       `json:"start_date"`
 }
 
-var (
-	flows   = map[string]*OnboardingFlow{}
+type OnboardingStore struct {
+	flows   map[string]*OnboardingFlow
 	flowsMu sync.RWMutex
 	counter int
-)
+}
+
+func NewOnboardingStore() *OnboardingStore {
+	return &OnboardingStore{flows: map[string]*OnboardingFlow{}}
+}
 
 var defaultTasks = []OnboardingTask{
 	{"t1", "Setup laptop", "Configure dev machine with required tools", "it", "it-team", true, 1},
@@ -44,26 +48,26 @@ var defaultTasks = []OnboardingTask{
 	{"t10", "First week checkpoint", "30-min check-in with HR", "hr", "hr-team", false, 7},
 }
 
-func CreateFlow(employeeID string) *OnboardingFlow {
-	flowsMu.Lock()
-	defer flowsMu.Unlock()
-	counter++
+func (s *OnboardingStore) CreateFlow(employeeID string) *OnboardingFlow {
+	s.flowsMu.Lock()
+	defer s.flowsMu.Unlock()
+	s.counter++
 	f := &OnboardingFlow{
-		ID: fmt.Sprintf("onb-%d", counter), EmployeeID: employeeID,
+		ID: fmt.Sprintf("onb-%d", s.counter), EmployeeID: employeeID,
 		StartDate: time.Now().Format("2006-01-02"),
 		Tasks:     make([]TaskStatus, len(defaultTasks)),
 	}
 	for i, t := range defaultTasks {
 		f.Tasks[i] = TaskStatus{OnboardingTask: t, Status: "pending"}
 	}
-	flows[f.ID] = f
+	s.flows[f.ID] = f
 	return f
 }
 
-func CompleteTask(flowID, taskID string) error {
-	flowsMu.Lock()
-	defer flowsMu.Unlock()
-	f, ok := flows[flowID]
+func (s *OnboardingStore) CompleteTask(flowID, taskID string) error {
+	s.flowsMu.Lock()
+	defer s.flowsMu.Unlock()
+	f, ok := s.flows[flowID]
 	if !ok {
 		return fmt.Errorf("flow not found")
 	}
@@ -77,10 +81,10 @@ func CompleteTask(flowID, taskID string) error {
 	return fmt.Errorf("task not found")
 }
 
-func GetProgress(flowID string) (done, total int, err error) {
-	flowsMu.RLock()
-	defer flowsMu.RUnlock()
-	f, ok := flows[flowID]
+func (s *OnboardingStore) GetProgress(flowID string) (done, total int, err error) {
+	s.flowsMu.RLock()
+	defer s.flowsMu.RUnlock()
+	f, ok := s.flows[flowID]
 	if !ok {
 		return 0, 0, fmt.Errorf("flow not found")
 	}
@@ -92,9 +96,9 @@ func GetProgress(flowID string) (done, total int, err error) {
 	return done, len(f.Tasks), nil
 }
 
-func GetFlow(flowID string) (*OnboardingFlow, bool) {
-	flowsMu.RLock()
-	defer flowsMu.RUnlock()
-	f, ok := flows[flowID]
+func (s *OnboardingStore) GetFlow(flowID string) (*OnboardingFlow, bool) {
+	s.flowsMu.RLock()
+	defer s.flowsMu.RUnlock()
+	f, ok := s.flows[flowID]
 	return f, ok
 }

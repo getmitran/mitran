@@ -25,7 +25,7 @@ Mitran (Sanskrit/Tamil: "friend, ally") is an open-source platform where AI agen
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    React Dashboard (:5173)               │
+│           React Dashboard (Dev :5173 | Docker :3000)     │
 │              WebSocket + REST API Consumer               │
 └───────────────────────────┬─────────────────────────────┘
                             │ HTTP/WS
@@ -54,7 +54,9 @@ cp .env.example .env  # Add your LLM API keys
 docker compose up
 ```
 
-Dashboard: http://localhost:5173 · API: http://localhost:7780 · Agents: http://localhost:8888
+Dashboard: http://localhost:3000 · API: http://localhost:7780 · Agents: http://localhost:8888
+
+> Dev: http://localhost:5173 | Docker: http://localhost:3000
 
 ## Manual Setup
 

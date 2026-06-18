@@ -80,5 +80,5 @@ func RBACMiddleware(config RBACConfig) func(http.Handler) http.Handler {
 }
 
 func isAdminRoute(path string) bool {
-	return strings.HasPrefix(path, "/api/users") || strings.HasPrefix(path, "/api/settings")
+	return strings.HasPrefix(path, "/api/v1/users") || strings.HasPrefix(path, "/api/v1/settings")
 }

@@ -1,34 +1,38 @@
-.PHONY: all build run test clean docker
+.PHONY: dev build test test-go test-python test-ts lint lint-go lint-python lint-ts docker clean
 
-all: build
-
-build:
-	cd prototype/server && go build -o ../../bin/mitran-engine .
-	cd prototype/cli && go build -o ../../bin/mitran .
-
-run: build
-	./bin/mitran-engine &
+dev:
+	cd prototype/server && go run . &
 	cd prototype/agent-worker && python -m flask --app worker.app run --port 8888 &
 	cd prototype/dashboard && npm run dev
 
-test:
-	cd prototype/server && go test ./... -v
-	cd prototype/agent-worker && pytest tests/ -v || true
+build:
+	cd prototype/server && go build -o ../../bin/mitran-engine .
+	cd prototype/dashboard && npm run build
+
+test: test-go test-python test-ts
+
+test-go:
+	cd prototype/server && go test ./...
+
+test-python:
+	cd prototype/agent-worker && pytest tests/ -v
+
+test-ts:
 	cd prototype/dashboard && npx tsc --noEmit
 
-clean:
-	rm -rf bin/ prototype/server/data/
+lint: lint-go lint-python lint-ts
+
+lint-go:
+	cd prototype/server && gofmt -l .
+
+lint-python:
+	cd prototype/agent-worker && ruff check .
+
+lint-ts:
+	cd prototype/dashboard && npx prettier --check "src/**/*.{ts,tsx}"
 
 docker:
-	docker compose up --build
+	docker compose build
 
-docker-down:
-	docker compose down -v
-
-install-deps:
-	cd prototype/dashboard && npm ci
-	cd prototype/agent-worker && pip install -e .
-
-lint:
-	cd prototype/server && golangci-lint run ./...
-	cd prototype/dashboard && npx tsc --noEmit
+clean:
+	rm -rf bin/ prototype/server/data/ prototype/dashboard/dist/
