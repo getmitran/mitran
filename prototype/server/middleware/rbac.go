@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Role string
@@ -39,12 +41,16 @@ func extractUser(req *http.Request) string {
 		return ""
 	}
 	p := strings.SplitN(c.Value, "|", 3)
-	if len(p) != 3 || os.Getenv("SESSION_SECRET") == "" {
+	if len(p) != 3 || os.Getenv("MITRAN_SESSION_SECRET") == "" {
 		return ""
 	}
-	mac := hmac.New(sha256.New, []byte(os.Getenv("SESSION_SECRET")))
+	mac := hmac.New(sha256.New, []byte(os.Getenv("MITRAN_SESSION_SECRET")))
 	mac.Write([]byte(p[0] + "|" + p[1]))
 	if !hmac.Equal([]byte(p[2]), []byte(hex.EncodeToString(mac.Sum(nil)))) {
+		return ""
+	}
+	expiry, err := strconv.ParseInt(p[1], 10, 64)
+	if err != nil || time.Now().Unix() > expiry {
 		return ""
 	}
 	return p[0]

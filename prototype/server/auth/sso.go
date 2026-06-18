@@ -33,10 +33,10 @@ func cleanExpiredStates() {
 }
 
 func makeSessionToken(email string) string {
-	ts := fmt.Sprintf("%d", time.Now().UnixNano())
-	mac := hmac.New(sha256.New, []byte(os.Getenv("JWT_SECRET")))
-	mac.Write([]byte(email + "|" + ts))
-	return fmt.Sprintf("%s|%s|%s", email, ts, hex.EncodeToString(mac.Sum(nil)))
+	expiry := fmt.Sprintf("%d", time.Now().Add(24*time.Hour).Unix())
+	mac := hmac.New(sha256.New, []byte(os.Getenv("MITRAN_SESSION_SECRET")))
+	mac.Write([]byte(email + "|" + expiry))
+	return fmt.Sprintf("%s|%s|%s", email, expiry, hex.EncodeToString(mac.Sum(nil)))
 }
 
 func HandleSSOLogin(w http.ResponseWriter, r *http.Request) {

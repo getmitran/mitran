@@ -2,7 +2,11 @@ package audit
 
 import (
 	"bufio"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"sync"
@@ -16,6 +20,7 @@ type AuditEntry struct {
 	Resource  string    `json:"resource"`
 	Details   string    `json:"details"`
 	IP        string    `json:"ip"`
+	HMAC      string    `json:"hmac,omitempty"`
 }
 
 type AuditFilter struct {
@@ -47,7 +52,34 @@ func (a *AuditLog) Log(e AuditEntry) error {
 		return err
 	}
 	defer f.Close()
+	if secret := os.Getenv("MITRAN_AUDIT_SECRET"); secret != "" {
+		e.HMAC = ""
+		raw, _ := json.Marshal(e)
+		mac := hmac.New(sha256.New, []byte(secret))
+		mac.Write(raw)
+		e.HMAC = hex.EncodeToString(mac.Sum(nil))
+	}
 	return json.NewEncoder(f).Encode(e)
+}
+
+func (a *AuditLog) Verify() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	secret := os.Getenv("MITRAN_AUDIT_SECRET")
+	if secret == "" {
+		return fmt.Errorf("MITRAN_AUDIT_SECRET not set")
+	}
+	for i, e := range a.readAllLocked() {
+		saved := e.HMAC
+		e.HMAC = ""
+		raw, _ := json.Marshal(e)
+		mac := hmac.New(sha256.New, []byte(secret))
+		mac.Write(raw)
+		if hex.EncodeToString(mac.Sum(nil)) != saved {
+			return fmt.Errorf("tampered entry at line %d", i+1)
+		}
+	}
+	return nil
 }
 
 // readAllLocked reads all entries from the audit log file.
