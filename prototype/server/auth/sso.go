@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -10,25 +12,41 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
-type SSOConfig struct {
-	Issuer, ClientID, ClientSecret, RedirectURL string
-}
+type SSOConfig struct{ Issuer, ClientID, ClientSecret, RedirectURL string }
 
 func LoadSSOConfig() SSOConfig {
 	return SSOConfig{os.Getenv("SSO_ISSUER"), os.Getenv("SSO_CLIENT_ID"), os.Getenv("SSO_CLIENT_SECRET"), os.Getenv("SSO_REDIRECT_URL")}
 }
 
-var ssoStates = map[string]time.Time{}
+var (
+	ssoStates = map[string]time.Time{}
+	statesMu  sync.Mutex
+)
+
+func cleanExpiredStates() {
+	now := time.Now()
+	for k, v := range ssoStates { if now.After(v) { delete(ssoStates, k) } }
+}
+
+func makeSessionToken(email string) string {
+	ts := fmt.Sprintf("%d", time.Now().UnixNano())
+	mac := hmac.New(sha256.New, []byte(os.Getenv("JWT_SECRET")))
+	mac.Write([]byte(email + "|" + ts))
+	return fmt.Sprintf("%s|%s|%s", email, ts, hex.EncodeToString(mac.Sum(nil)))
+}
 
 func HandleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	cfg := LoadSSOConfig()
 	b := make([]byte, 16)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		http.Error(w, "entropy failure", http.StatusInternalServerError); return
+	}
 	state := hex.EncodeToString(b)
-	ssoStates[state] = time.Now().Add(10 * time.Minute)
+	statesMu.Lock(); cleanExpiredStates(); ssoStates[state] = time.Now().Add(10 * time.Minute); statesMu.Unlock()
 	u := fmt.Sprintf("%s/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+email&state=%s",
 		strings.TrimRight(cfg.Issuer, "/"), url.QueryEscape(cfg.ClientID), url.QueryEscape(cfg.RedirectURL), state)
 	http.Redirect(w, r, u, http.StatusFound)
@@ -37,44 +55,31 @@ func HandleSSOLogin(w http.ResponseWriter, r *http.Request) {
 func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	cfg := LoadSSOConfig()
 	state := r.URL.Query().Get("state")
+	statesMu.Lock()
 	exp, ok := ssoStates[state]
-	if !ok || time.Now().After(exp) {
-		http.Error(w, "invalid state", http.StatusBadRequest)
-		return
-	}
-	delete(ssoStates, state)
+	if ok { delete(ssoStates, state) }
+	statesMu.Unlock()
+	if !ok || time.Now().After(exp) { http.Error(w, "invalid state", http.StatusBadRequest); return }
 	resp, err := http.PostForm(strings.TrimRight(cfg.Issuer, "/")+"/token", url.Values{
 		"grant_type": {"authorization_code"}, "code": {r.URL.Query().Get("code")},
 		"redirect_uri": {cfg.RedirectURL}, "client_id": {cfg.ClientID}, "client_secret": {cfg.ClientSecret},
 	})
-	if err != nil {
-		http.Error(w, "token exchange failed", http.StatusBadGateway)
-		return
-	}
+	if err != nil { http.Error(w, "token exchange failed", http.StatusBadGateway); return }
 	defer resp.Body.Close()
 	var tok struct{ IDToken string `json:"id_token"` }
 	json.NewDecoder(resp.Body).Decode(&tok)
 	parts := strings.Split(tok.IDToken, ".")
-	if len(parts) != 3 {
-		http.Error(w, "invalid id_token", http.StatusBadGateway)
-		return
-	}
+	if len(parts) != 3 { http.Error(w, "invalid id_token", http.StatusBadGateway); return }
+	// NOTE: Production must verify JWT signature via JWKS endpoint (issuer/.well-known/jwks.json).
+	// Skipped for v0.1.0 — we trust the TLS channel to the IdP for token exchange.
 	seg := strings.ReplaceAll(strings.ReplaceAll(parts[1], "-", "+"), "_", "/")
-	for len(seg)%4 != 0 {
-		seg += "="
-	}
+	for len(seg)%4 != 0 { seg += "=" }
 	payload, _ := base64.StdEncoding.DecodeString(seg)
-	var claims struct {
-		Iss, Sub, Email string
-		Aud             string `json:"aud"`
-		Exp             int64  `json:"exp"`
-	}
+	var claims struct{ Iss, Sub, Email, Aud string; Exp int64 }
 	json.Unmarshal(payload, &claims)
 	if claims.Iss != cfg.Issuer || claims.Aud != cfg.ClientID || time.Now().Unix() > claims.Exp {
-		http.Error(w, "token validation failed", http.StatusUnauthorized)
-		return
+		http.Error(w, "token validation failed", http.StatusUnauthorized); return
 	}
-	session := fmt.Sprintf("sess-%s-%d", claims.Email, time.Now().UnixNano())
-	http.SetCookie(w, &http.Cookie{Name: "session", Value: session, Path: "/", HttpOnly: true})
+	http.SetCookie(w, &http.Cookie{Name: "session", Value: makeSessionToken(claims.Email), Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
 	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }

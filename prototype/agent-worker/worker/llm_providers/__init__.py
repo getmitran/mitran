@@ -7,6 +7,7 @@ from .provider import (
     OllamaProvider,
     get_provider,
 )
+from . import ollama  # standalone simple interface: ollama.invoke(prompt, ...)
 
 __all__ = [
     "ProviderConfig",
@@ -16,4 +17,5 @@ __all__ = [
     "AnthropicProvider",
     "OllamaProvider",
     "get_provider",
+    "ollama",
 ]

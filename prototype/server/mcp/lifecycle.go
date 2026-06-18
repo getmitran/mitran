@@ -10,11 +10,13 @@ import (
 )
 
 type ServerConfig struct {
-	ID      string   `json:"id"`
-	Command string   `json:"command"`
-	Args    []string `json:"args"`
-	Env     []string `json:"env,omitempty"`
-	AutoStart bool   `json:"auto_start"`
+	ID        string            `json:"id"`
+	Name      string            `json:"name"`
+	Command   string            `json:"command"`
+	Args      []string          `json:"args"`
+	Env       map[string]string `json:"env,omitempty"`
+	Enabled   bool              `json:"enabled"`
+	AutoStart bool              `json:"auto_start"`
 }
 
 type ServerStatus struct {
@@ -202,7 +204,11 @@ func (lm *LifecycleManager) Shutdown() {
 func (lm *LifecycleManager) startProcess(srv *managedServer) error {
 	ctx, cancel := context.WithCancel(lm.ctx)
 	cmd := exec.CommandContext(ctx, srv.config.Command, srv.config.Args...)
-	cmd.Env = append(os.Environ(), srv.config.Env...)
+	env := os.Environ()
+	for k, v := range srv.config.Env {
+		env = append(env, k+"="+v)
+	}
+	cmd.Env = env
 
 	if err := cmd.Start(); err != nil {
 		cancel()

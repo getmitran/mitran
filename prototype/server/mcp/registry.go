@@ -8,15 +8,6 @@ import (
 	"sync"
 )
 
-type ServerConfig struct {
-	ID      string            `json:"id"`
-	Name    string            `json:"name"`
-	Command string            `json:"command"`
-	Args    []string          `json:"args"`
-	Env     map[string]string `json:"env,omitempty"`
-	Enabled bool              `json:"enabled"`
-}
-
 type Registry struct {
 	mu      sync.RWMutex
 	dir     string

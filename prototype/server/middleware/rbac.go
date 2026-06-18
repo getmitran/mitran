@@ -1,9 +1,13 @@
 package middleware
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Role string
@@ -14,33 +18,47 @@ const (
 	RoleViewer    Role = "viewer"
 )
 
-type RBACConfig struct {
-	Users map[string]Role `json:"users"`
-}
+type RBACConfig struct{ Users map[string]Role `json:"users"` }
 
 func LoadRBACConfig() RBACConfig {
 	cfg := RBACConfig{Users: make(map[string]Role)}
-	path := os.Getenv("RBAC_CONFIG_PATH")
-	if path == "" {
-		return cfg
+	if p := os.Getenv("RBAC_CONFIG_PATH"); p != "" {
+		if d, err := os.ReadFile(p); err == nil {
+			json.Unmarshal(d, &cfg)
+		}
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return cfg
-	}
-	json.Unmarshal(data, &cfg)
 	return cfg
 }
 
-func CanWrite(role Role) bool  { return role == RoleAdmin || role == RoleDeveloper }
-func CanAdmin(role Role) bool  { return role == RoleAdmin }
+func CanWrite(r Role) bool { return r == RoleAdmin || r == RoleDeveloper }
+func CanAdmin(r Role) bool { return r == RoleAdmin }
+
+func extractUser(req *http.Request) string {
+	c, err := req.Cookie("session")
+	if err != nil || c.Value == "" {
+		return ""
+	}
+	p := strings.SplitN(c.Value, "|", 3)
+	if len(p) != 3 || os.Getenv("SESSION_SECRET") == "" {
+		return ""
+	}
+	mac := hmac.New(sha256.New, []byte(os.Getenv("SESSION_SECRET")))
+	mac.Write([]byte(p[0] + "|" + p[1]))
+	if !hmac.Equal([]byte(p[2]), []byte(hex.EncodeToString(mac.Sum(nil)))) {
+		return ""
+	}
+	return p[0]
+}
 
 func RBACMiddleware(config RBACConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user := r.Header.Get("X-User")
+			user := extractUser(r)
+			if user == "" && os.Getenv("MITRAN_ENV") != "production" {
+				user = r.Header.Get("X-User")
+			}
 			if user == "" {
-				http.Error(w, `{"error":"missing X-User header"}`, http.StatusUnauthorized)
+				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
 				return
 			}
 			role, ok := config.Users[user]
@@ -56,12 +74,11 @@ func RBACMiddleware(config RBACConfig) func(http.Handler) http.Handler {
 				http.Error(w, `{"error":"admin access required"}`, http.StatusForbidden)
 				return
 			}
-			w.Header().Set("Content-Type", "application/json")
 			next.ServeHTTP(w, r)
 		})
 	}
 }
 
 func isAdminRoute(path string) bool {
-	return len(path) > 10 && (path[:10] == "/api/users" || path[:13] == "/api/settings")
+	return strings.HasPrefix(path, "/api/users") || strings.HasPrefix(path, "/api/settings")
 }

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 )
 
 type SearchResult struct {
@@ -15,79 +14,77 @@ type SearchResult struct {
 	Score   float64 `json:"score"`
 }
 
-type Correction struct {
-	ID        string    `json:"id"`
-	Original  string    `json:"original"`
-	Corrected string    `json:"corrected"`
-	Reason    string    `json:"reason"`
-	AppliedTo string   `json:"applied_to"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
 type SearchableMemory struct {
-	mu          sync.RWMutex
-	dir         string
-	Corrections []Correction `json:"corrections"`
+	mu  sync.RWMutex
+	dir string
 }
 
 func NewSearchableMemory(dir string) (*SearchableMemory, error) {
 	os.MkdirAll(dir, 0755)
 	sm := &SearchableMemory{dir: dir}
-	sm.load()
 	return sm, nil
 }
 
-func (sm *SearchableMemory) Search(query string, store *Store) []SearchResult {
+func (sm *SearchableMemory) Search(query string, store *MemoryStore) []SearchResult {
 	sm.mu.RLock()
 	defer sm.mu.RUnlock()
 	var results []SearchResult
 	q := strings.ToLower(query)
 
 	// Search facts
-	for _, f := range store.Facts {
-		if strings.Contains(strings.ToLower(f.Key), q) || strings.Contains(strings.ToLower(f.Value), q) {
-			results = append(results, SearchResult{Type: "fact", Content: f.Key + ": " + f.Value, Score: 1.0})
+	for k, v := range store.Facts {
+		if strings.Contains(strings.ToLower(k), q) || strings.Contains(strings.ToLower(v), q) {
+			results = append(results, SearchResult{Type: "fact", Content: k + ": " + v, Score: 1.0})
 		}
 	}
 	// Search episodes
 	for _, e := range store.Episodes {
-		if strings.Contains(strings.ToLower(e.Content), q) {
-			results = append(results, SearchResult{Type: "episode", Content: e.Content, Score: 0.8})
+		if strings.Contains(strings.ToLower(e.Text), q) {
+			results = append(results, SearchResult{Type: "episode", Content: e.Text, Score: 0.8})
 		}
 	}
 	// Search corrections
-	for _, c := range sm.Corrections {
-		if strings.Contains(strings.ToLower(c.Original), q) || strings.Contains(strings.ToLower(c.Corrected), q) {
-			results = append(results, SearchResult{Type: "correction", Content: c.Original + " -> " + c.Corrected, Score: 0.9})
+	for _, c := range store.Corrections {
+		if strings.Contains(strings.ToLower(c.Rule), q) || strings.Contains(strings.ToLower(c.Negative), q) {
+			results = append(results, SearchResult{Type: "correction", Content: c.Rule, Score: 0.9})
 		}
 	}
 	return results
 }
 
-func (sm *SearchableMemory) AddCorrection(original, corrected, reason, appliedTo string) *Correction {
-	sm.mu.Lock()
-	defer sm.mu.Unlock()
-	c := Correction{
-		ID: time.Now().Format("20060102150405"), Original: original,
-		Corrected: corrected, Reason: reason, AppliedTo: appliedTo, CreatedAt: time.Now(),
-	}
-	sm.Corrections = append(sm.Corrections, c)
-	sm.save()
-	return &sm.Corrections[len(sm.Corrections)-1]
+func (sm *SearchableMemory) AddCorrection(store *MemoryStore, rule, negative, category string) Correction {
+	return store.AddCorrection(rule, negative, category)
 }
 
-func (sm *SearchableMemory) ListCorrections() []Correction {
-	sm.mu.RLock()
-	defer sm.mu.RUnlock()
-	return append([]Correction{}, sm.Corrections...)
+func (sm *SearchableMemory) ListCorrections(store *MemoryStore) []Correction {
+	return store.ListCorrections()
 }
 
 func (sm *SearchableMemory) load() {
-	data, _ := os.ReadFile(filepath.Join(sm.dir, "corrections.json"))
-	json.Unmarshal(data, &sm.Corrections)
+	// No-op: corrections now live in MemoryStore
 }
 
 func (sm *SearchableMemory) save() {
-	data, _ := json.MarshalIndent(sm.Corrections, "", "  ")
-	os.WriteFile(filepath.Join(sm.dir, "corrections.json"), data, 0644)
+	// No-op: corrections now live in MemoryStore
+}
+
+// LoadSearchIndex loads any supplemental search index data
+func (sm *SearchableMemory) LoadSearchIndex() error {
+	indexPath := filepath.Join(sm.dir, "search_index.json")
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		return nil
+	}
+	data, err := os.ReadFile(indexPath)
+	if err != nil {
+		return err
+	}
+	_ = data // reserved for future index expansion
+	return nil
+}
+
+// SaveSearchIndex persists supplemental search index data
+func (sm *SearchableMemory) SaveSearchIndex() error {
+	indexPath := filepath.Join(sm.dir, "search_index.json")
+	data, _ := json.MarshalIndent(map[string]interface{}{}, "", "  ")
+	return os.WriteFile(indexPath, data, 0644)
 }
