@@ -81,8 +81,8 @@ func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(resp.Body).Decode(&tok)
 	parts := strings.Split(tok.IDToken, ".")
 	if len(parts) != 3 { http.Error(w, "invalid id_token", http.StatusBadGateway); return }
-	// NOTE: Production must verify JWT signature via JWKS endpoint (issuer/.well-known/jwks.json).
-	// Skipped for v0.1.0 — we trust the TLS channel to the IdP for token exchange.
+	// Verify JWT signature via JWKS
+	if _, err := VerifyJWT(tok.IDToken, cfg.Issuer); err != nil { http.Error(w, "JWT signature verification failed", http.StatusUnauthorized); return }
 	seg := strings.ReplaceAll(strings.ReplaceAll(parts[1], "-", "+"), "_", "/")
 	for len(seg)%4 != 0 { seg += "=" }
 	payload, _ := base64.StdEncoding.DecodeString(seg)

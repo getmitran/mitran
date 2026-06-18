@@ -65,7 +65,7 @@ func RBACMiddleware(config RBACConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user := extractUser(r)
-			if user == "" && os.Getenv("MITRAN_ENV") != "production" {
+			if user == "" && os.Getenv("MITRAN_ENV") == "development" {
 				user = r.Header.Get("X-User")
 			}
 			if user == "" {

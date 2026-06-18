@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/getmitran/mitran/server/db"
 	"github.com/getmitran/mitran/server/logging"
@@ -15,6 +16,7 @@ import (
 	"github.com/getmitran/mitran/server/middleware"
 	"github.com/getmitran/mitran/server/scheduler"
 	"github.com/getmitran/mitran/server/settings"
+	"github.com/getmitran/mitran/server/shutdown"
 	"github.com/getmitran/mitran/server/queue"
 	"github.com/getmitran/mitran/server/websocket"
 	"github.com/getmitran/mitran/server/workspace"
@@ -141,5 +143,7 @@ func main() {
 	fmt.Printf("    WS   /api/v1/ws            WebSocket (real-time)\n")
 	fmt.Printf("    GET  /health               Health check\n\n")
 	fmt.Printf("  Data: %s\n\n", dataDir)
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+	if err := shutdown.ListenAndServeGraceful(":"+port, handler, 15*time.Second); err != nil {
+		log.Fatal(err)
+	}
 }

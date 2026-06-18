@@ -8,6 +8,7 @@ import (
 )
 
 type apiKeyWindow struct {
+	mu          sync.Mutex
 	count       int
 	windowStart time.Time
 }
@@ -26,14 +27,17 @@ func RateLimitByAPIKey(next http.Handler) http.Handler {
 		val, _ := apiKeyLimits.LoadOrStore(key, &apiKeyWindow{count: 0, windowStart: now})
 		window := val.(*apiKeyWindow)
 
+		window.mu.Lock()
 		if now.Sub(window.windowStart) > time.Minute {
 			window.count = 0
 			window.windowStart = now
 		}
-
 		window.count++
-		if window.count > 100 {
-			remaining := time.Minute - now.Sub(window.windowStart)
+		exceeded := window.count > 100
+		remaining := time.Minute - now.Sub(window.windowStart)
+		window.mu.Unlock()
+
+		if exceeded {
 			w.Header().Set("Retry-After", fmt.Sprintf("%d", int(remaining.Seconds())+1))
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return

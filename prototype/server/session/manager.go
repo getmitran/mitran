@@ -1,6 +1,8 @@
 package session
 
 import (
+	crypto_rand "crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -118,10 +120,7 @@ func generateID() string {
 }
 
 func randomHex(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = "0123456789abcdef"[time.Now().UnixNano()%16]
-		time.Sleep(1)
-	}
-	return string(b)
+	b := make([]byte, n/2)
+	crypto_rand.Read(b)
+	return hex.EncodeToString(b)
 }

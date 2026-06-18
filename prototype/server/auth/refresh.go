@@ -25,7 +25,9 @@ func NewRefreshStore() *RefreshStore {
 
 func (s *RefreshStore) IssueRefreshToken(email string) string {
 	b := make([]byte, 32)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
 	token := hex.EncodeToString(b)
 	s.mu.Lock()
 	s.tokens[token] = &RefreshEntry{
@@ -65,7 +67,9 @@ func (s *RefreshStore) RotateRefresh(oldToken string) (newAccess, newRefresh str
 
 	// Generate access token (64-byte hex)
 	b := make([]byte, 32)
-	rand.Read(b)
+	if _, err = rand.Read(b); err != nil {
+		return "", "", err
+	}
 	newAccess = hex.EncodeToString(b)
 
 	return newAccess, newRefresh, nil

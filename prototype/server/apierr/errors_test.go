@@ -5,24 +5,26 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
-func TestNewNotFound(t *testing.T) {
-	err := NewNotFound("item not found")
-	if err.Status != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", err.Status)
+func TestNotFound(t *testing.T) {
+	err := NotFound("item not found")
+	if err.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", err.Code)
 	}
 	if err.Message != "item not found" {
 		t.Fatalf("expected 'item not found', got %q", err.Message)
 	}
+	if err.Type != "not_found" {
+		t.Fatalf("expected type 'not_found', got %q", err.Type)
+	}
 }
 
-func TestNewBadRequest(t *testing.T) {
-	err := NewBadRequest("invalid input")
-	if err.Status != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", err.Status)
+func TestBadRequest(t *testing.T) {
+	err := BadRequest("invalid input")
+	if err.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", err.Code)
 	}
 	if err.Message != "invalid input" {
 		t.Fatalf("expected 'invalid input', got %q", err.Message)
@@ -31,7 +33,7 @@ func TestNewBadRequest(t *testing.T) {
 
 func TestWriteErrorWithAPIError(t *testing.T) {
 	w := httptest.NewRecorder()
-	apiErr := NewNotFound("resource missing")
+	apiErr := NotFound("resource missing")
 	WriteError(w, apiErr)
 
 	if w.Code != http.StatusNotFound {
@@ -41,8 +43,11 @@ func TestWriteErrorWithAPIError(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
 		t.Fatalf("failed to decode body: %v", err)
 	}
-	if body["error"] != "resource missing" {
-		t.Fatalf("expected error 'resource missing', got %v", body["error"])
+	if body["error"] != "not_found" {
+		t.Fatalf("expected error 'not_found', got %v", body["error"])
+	}
+	if body["message"] != "resource missing" {
+		t.Fatalf("expected message 'resource missing', got %v", body["message"])
 	}
 }
 
@@ -57,18 +62,17 @@ func TestWriteErrorWithPlainError(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
 		t.Fatalf("failed to decode body: %v", err)
 	}
-	if body["error"] != "something broke" {
-		t.Fatalf("expected error 'something broke', got %v", body["error"])
+	if body["error"] != "internal_error" {
+		t.Fatalf("expected error 'internal_error', got %v", body["error"])
+	}
+	if body["message"] != "something broke" {
+		t.Fatalf("expected message 'something broke', got %v", body["message"])
 	}
 }
 
 func TestErrorMethod(t *testing.T) {
-	err := NewNotFound("gone")
-	msg := err.Error()
-	if !strings.Contains(msg, "not_found") && !strings.Contains(msg, "404") {
-		t.Fatalf("Error() should include type info, got %q", msg)
-	}
-	if !strings.Contains(msg, "gone") {
-		t.Fatalf("Error() should include message, got %q", msg)
+	err := NotFound("gone")
+	if err.Error() != "gone" {
+		t.Fatalf("Error() should return message, got %q", err.Error())
 	}
 }
