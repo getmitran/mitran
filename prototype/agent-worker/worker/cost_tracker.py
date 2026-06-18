@@ -3,7 +3,13 @@ from datetime import date
 from collections import defaultdict
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'cost_tracking.json')
-PRICES = {"input": 3.0 / 1_000_000, "output": 15.0 / 1_000_000}
+MODEL_PRICES = {
+    "claude-sonnet": (3.0, 15.0),
+    "claude-haiku": (0.25, 1.25),
+    "gpt-4o": (5.0, 15.0),
+    "gpt-4o-mini": (0.15, 0.6),
+    "llama3": (0.0, 0.0),
+}
 
 class CostTracker:
     def __init__(self):
@@ -22,7 +28,8 @@ class CostTracker:
 
     def track(self, agent_id, model, input_tokens, output_tokens, cost_usd=None):
         if cost_usd is None:
-            cost_usd = input_tokens * PRICES["input"] + output_tokens * PRICES["output"]
+            inp_rate, out_rate = MODEL_PRICES.get(model, MODEL_PRICES["claude-sonnet"])
+            cost_usd = input_tokens * (inp_rate / 1_000_000) + output_tokens * (out_rate / 1_000_000)
         self.data["records"].append({"agent_id": agent_id, "model": model,
             "input_tokens": input_tokens, "output_tokens": output_tokens,
             "cost_usd": round(cost_usd, 6), "date": str(date.today())})

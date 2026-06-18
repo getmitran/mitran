@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/getmitran/mitran/server/db"
+	"github.com/getmitran/mitran/server/logging"
 	"github.com/getmitran/mitran/server/handlers"
 	"github.com/getmitran/mitran/server/memory"
 	"github.com/getmitran/mitran/server/middleware"
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	logger := logging.New()
+
 	// Data directory
 	dataDir := filepath.Join(".", ".mitran")
 	if d := os.Getenv("MITRAN_DATA_DIR"); d != "" {
@@ -95,6 +98,10 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// K8s probes
+	mux.HandleFunc("/healthz", handlers.Healthz)
+	mux.HandleFunc("/readyz", handlers.Readyz)
+
 	// Root — show available routes
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -114,7 +121,8 @@ func main() {
 		port = p
 	}
 
-	handler := middleware.CORS(mux)
+	handler := middleware.CORS(middleware.RequestLogger(mux))
+	logger.Info("server starting", "port", port, "data_dir", dataDir)
 	fmt.Printf("\n  ╔══════════════════════════════════════════╗\n")
 	fmt.Printf("  ║   Mitran Core Engine v0.1.0              ║\n")
 	fmt.Printf("  ╚══════════════════════════════════════════╝\n\n")

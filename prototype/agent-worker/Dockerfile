@@ -5,4 +5,4 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 EXPOSE 8888
-CMD ["python", "-m", "worker.main"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "worker.app:app"]
