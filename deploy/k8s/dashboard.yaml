@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitran-dashboard
+  template:
+    metadata:
+      labels:
+        app: mitran-dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: ghcr.io/getmitran/mitran-dashboard:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-dashboard
+spec:
+  type: LoadBalancer
+  selector:
+    app: mitran-dashboard
+  ports:
+  - port: 80
+    targetPort: 3000

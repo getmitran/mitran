@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitran-engine
+  template:
+    metadata:
+      labels:
+        app: mitran-engine
+    spec:
+      containers:
+      - name: engine
+        image: ghcr.io/getmitran/mitran-engine:latest
+        ports:
+        - containerPort: 7780
+        env:
+        - name: MITRAN_PORT
+          value: "7780"
+        - name: MITRAN_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mitran-secrets
+              key: jwt-secret
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7780
+          initialDelaySeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-engine
+spec:
+  selector:
+    app: mitran-engine
+  ports:
+  - port: 7780
+    targetPort: 7780

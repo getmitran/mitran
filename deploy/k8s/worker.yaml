@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mitran-worker
+  template:
+    metadata:
+      labels:
+        app: mitran-worker
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/getmitran/mitran-worker:latest
+        ports:
+        - containerPort: 8888
+        env:
+        - name: MITRAN_ENGINE_URL
+          value: "http://mitran-engine:7780"
+        - name: AWS_REGION
+          value: "us-east-1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-worker
+spec:
+  selector:
+    app: mitran-worker
+  ports:
+  - port: 8888
+    targetPort: 8888
