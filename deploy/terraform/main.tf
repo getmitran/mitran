@@ -1,91 +1,180 @@
-terraform {
-  required_version = ">= 1.5"
-  required_providers {
-    aws = { source = "hashicorp/aws", version = "~> 5.0" }
-  }
+variable "region" {
+  default = "us-east-1"
+}
+
+variable "cluster_name" {
+  default = "mitran-cluster"
+}
+
+variable "image_tag" {
+  default = "latest"
 }
 
 provider "aws" {
   region = var.region
 }
 
-variable "region" { default = "us-east-1" }
-variable "env" { default = "prod" }
-variable "vpc_cidr" { default = "10.0.0.0/16" }
-
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  tags = { Name = "mitran-${var.env}" }
+data "aws_vpc" "default" {
+  default = true
 }
 
-resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
-  map_public_ip_on_launch = true
-  tags = { Name = "mitran-${var.env}-public" }
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
 }
 
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
+resource "aws_cloudwatch_log_group" "mitran" {
+  name              = "/ecs/mitran"
+  retention_in_days = 14
 }
 
-# ECS Cluster
+resource "aws_security_group" "mitran" {
+  name   = "mitran-sg"
+  vpc_id = data.aws_vpc.default.id
+
+  ingress {
+    from_port   = 7780
+    to_port     = 7780
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8888
+    to_port     = 8888
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_ecs_cluster" "mitran" {
-  name = "mitran-${var.env}"
+  name = var.cluster_name
 }
 
-# ECR Repositories
-resource "aws_ecr_repository" "engine" {
-  name = "mitran-engine"
+resource "aws_ecs_task_definition" "mitran" {
+  family                   = "mitran"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "mitran-engine"
+      image     = "mitran/engine:${var.image_tag}"
+      essential = true
+      portMappings = [{ containerPort = 7780, protocol = "tcp" }]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.mitran.name
+          "awslogs-region"        = var.region
+          "awslogs-stream-prefix" = "engine"
+        }
+      }
+    },
+    {
+      name      = "mitran-worker"
+      image     = "mitran/worker:${var.image_tag}"
+      essential = true
+      portMappings = [{ containerPort = 8888, protocol = "tcp" }]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.mitran.name
+          "awslogs-region"        = var.region
+          "awslogs-stream-prefix" = "worker"
+        }
+      }
+    }
+  ])
 }
 
-resource "aws_ecr_repository" "worker" {
-  name = "mitran-worker"
-}
-
-resource "aws_ecr_repository" "dashboard" {
-  name = "mitran-dashboard"
-}
-
-# IAM Role for ECS tasks
-resource "aws_iam_role" "ecs_task" {
-  name = "mitran-${var.env}-ecs-task"
+resource "aws_iam_role" "ecs_execution" {
+  name = "mitran-ecs-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "ecs-tasks.amazonaws.com" }
     }]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
-  role       = aws_iam_role.ecs_task.name
+resource "aws_iam_role_policy_attachment" "ecs_execution" {
+  role       = aws_iam_role.ecs_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Bedrock access for worker
-resource "aws_iam_policy" "bedrock_access" {
-  name = "mitran-${var.env}-bedrock"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
-      Resource = "*"
-    }]
-  })
+resource "aws_lb" "mitran" {
+  name               = "mitran-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.mitran.id]
+  subnets            = data.aws_subnets.default.ids
 }
 
-resource "aws_iam_role_policy_attachment" "bedrock" {
-  role       = aws_iam_role.ecs_task.name
-  policy_arn = aws_iam_policy.bedrock_access.arn
+resource "aws_lb_target_group" "mitran" {
+  name        = "mitran-tg"
+  port        = 7780
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    path = "/healthz"
+  }
 }
 
-output "cluster_name" { value = aws_ecs_cluster.mitran.name }
-output "ecr_engine" { value = aws_ecr_repository.engine.repository_url }
-output "ecr_worker" { value = aws_ecr_repository.worker.repository_url }
-output "ecr_dashboard" { value = aws_ecr_repository.dashboard.repository_url }
+resource "aws_lb_listener" "mitran" {
+  load_balancer_arn = aws_lb.mitran.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.mitran.arn
+  }
+}
+
+resource "aws_ecs_service" "mitran" {
+  name            = "mitran-service"
+  cluster         = aws_ecs_cluster.mitran.id
+  task_definition = aws_ecs_task_definition.mitran.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets         = data.aws_subnets.default.ids
+    security_groups = [aws_security_group.mitran.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.mitran.arn
+    container_name   = "mitran-engine"
+    container_port   = 7780
+  }
+}
+
+output "alb_dns_name" {
+  value = aws_lb.mitran.dns_name
+}
