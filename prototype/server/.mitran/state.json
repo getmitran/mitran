@@ -1,0 +1,201 @@
+{
+  "Mu": {},
+  "projects": [
+    {
+      "id": "af94006a78ae7fcf",
+      "name": "Tets123",
+      "description": "",
+      "languages": null,
+      "team_size": 5,
+      "created_at": "2026-06-18T09:25:40.852679+05:30"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "f96c3038e1d733a9",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Initialize the project repository structure",
+      "description": "",
+      "agent_type": "dev",
+      "priority": 100,
+      "status": "queued",
+      "depends_on": null,
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854134+05:30"
+    },
+    {
+      "id": "efcfee9ce23995c4",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Set up CI/CD pipeline",
+      "description": "",
+      "agent_type": "cicd",
+      "priority": 90,
+      "status": "queued",
+      "depends_on": [
+        "f96c3038e1d733a9"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854136+05:30"
+    },
+    {
+      "id": "5ca305c1936d84ca",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Create project wiki with architecture overview",
+      "description": "",
+      "agent_type": "wiki",
+      "priority": 80,
+      "status": "queued",
+      "depends_on": [
+        "f96c3038e1d733a9"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854143+05:30"
+    },
+    {
+      "id": "cb0c239b6acab20f",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Generate API documentation templates",
+      "description": "",
+      "agent_type": "docs",
+      "priority": 70,
+      "status": "queued",
+      "depends_on": [
+        "f96c3038e1d733a9"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854143+05:30"
+    },
+    {
+      "id": "5327a08c197bb94e",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Set up monitoring and alerting dashboards",
+      "description": "",
+      "agent_type": "ops",
+      "priority": 75,
+      "status": "queued",
+      "depends_on": [
+        "efcfee9ce23995c4"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854143+05:30"
+    },
+    {
+      "id": "21b9c5b7836f99a2",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Create ticket templates and workflow",
+      "description": "",
+      "agent_type": "tickets",
+      "priority": 60,
+      "status": "queued",
+      "depends_on": null,
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854144+05:30"
+    },
+    {
+      "id": "ac2f0954c4cfb5b9",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Configure code review policies",
+      "description": "",
+      "agent_type": "review",
+      "priority": 65,
+      "status": "queued",
+      "depends_on": [
+        "efcfee9ce23995c4"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854144+05:30"
+    },
+    {
+      "id": "1ce795c83c53bcd5",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Scaffold core the project service",
+      "description": "",
+      "agent_type": "dev",
+      "priority": 95,
+      "status": "queued",
+      "depends_on": [
+        "f96c3038e1d733a9",
+        "efcfee9ce23995c4"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854144+05:30"
+    },
+    {
+      "id": "4ed9650e0b2f1ac9",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Set up team onboarding documentation",
+      "description": "",
+      "agent_type": "hr",
+      "priority": 40,
+      "status": "queued",
+      "depends_on": [
+        "5ca305c1936d84ca"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854144+05:30"
+    },
+    {
+      "id": "2b90b55cfb36b99d",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Implement health check endpoints",
+      "description": "",
+      "agent_type": "dev",
+      "priority": 85,
+      "status": "queued",
+      "depends_on": [
+        "1ce795c83c53bcd5"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854144+05:30"
+    },
+    {
+      "id": "e198ea70783214f1",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Create runbook for incident response",
+      "description": "",
+      "agent_type": "ops",
+      "priority": 55,
+      "status": "queued",
+      "depends_on": [
+        "5327a08c197bb94e",
+        "1ce795c83c53bcd5"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854145+05:30"
+    },
+    {
+      "id": "6506e4fc5a56b360",
+      "project_id": "af94006a78ae7fcf",
+      "title": "Generate test coverage baseline",
+      "description": "",
+      "agent_type": "review",
+      "priority": 50,
+      "status": "queued",
+      "depends_on": [
+        "1ce795c83c53bcd5",
+        "2b90b55cfb36b99d"
+      ],
+      "resources": [],
+      "created_by": "mitran-init",
+      "created_at": "2026-06-18T09:25:40.854145+05:30"
+    }
+  ],
+  "checkpoints": null,
+  "agents": null,
+  "config": {},
+  "project_environments": null,
+  "pipelines": null,
+  "pipeline_runs": null,
+  "deployments": null
+}

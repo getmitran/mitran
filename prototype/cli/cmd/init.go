@@ -23,7 +23,7 @@ const (
 	colorRed    = "\033[31m"
 )
 
-var engineURL = "http://localhost:7777"
+var engineURL = "http://localhost:7780"
 
 var initCmd = &cobra.Command{
 	Use:   "init",

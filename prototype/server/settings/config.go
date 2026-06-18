@@ -46,7 +46,7 @@ func Default() Config {
 		ProjectsDir:  "",
 		ProjectPaths: make(map[string]string),
 		Modules:      ModulePaths{},
-		EnginePort:   "7777",
+		EnginePort:   "7780",
 		WorkerPort:   "8888",
 	}
 }

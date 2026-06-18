@@ -77,16 +77,39 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// Root — show available routes
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"name":"mitran","version":"0.1.0","endpoints":["/health","/api/v1/init","/api/v1/tasks","/api/v1/agents","/api/v1/checkpoints","/api/v1/projects","/api/v1/settings"],"dashboard":"http://localhost:5173"}`))
+	})
+
 	// Start scheduler
 	sched := &scheduler.Scheduler{Store: store, WorkspaceDir: cfg.ProjectsDir}
 	sched.Start()
 
-	port := "7777"
+	port := "7780"
 	if p := os.Getenv("MITRAN_PORT"); p != "" {
 		port = p
 	}
 
 	handler := middleware.CORS(mux)
-	fmt.Printf("Mitran Core Engine running on http://localhost:%s\n", port)
+	fmt.Printf("\n  ╔══════════════════════════════════════════╗\n")
+	fmt.Printf("  ║   Mitran Core Engine v0.1.0              ║\n")
+	fmt.Printf("  ╚══════════════════════════════════════════╝\n\n")
+	fmt.Printf("  Engine:    http://localhost:%s\n", port)
+	fmt.Printf("  Dashboard: http://localhost:5173 (start separately)\n\n")
+	fmt.Printf("  API Routes:\n")
+	fmt.Printf("    POST /api/v1/init          Create project + task plan\n")
+	fmt.Printf("    GET  /api/v1/tasks         List tasks\n")
+	fmt.Printf("    GET  /api/v1/agents        List agents\n")
+	fmt.Printf("    GET  /api/v1/checkpoints   Pending checkpoints\n")
+	fmt.Printf("    GET  /api/v1/projects      List projects\n")
+	fmt.Printf("    GET  /api/v1/settings      Configuration\n")
+	fmt.Printf("    GET  /health               Health check\n\n")
+	fmt.Printf("  Data: %s\n\n", dataDir)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
