@@ -23,7 +23,7 @@ var (
 	obCounter    int
 )
 
-var defaultTasks = []struct{ Title, Category string }{
+var offboardDefaults = []struct{ Title, Category string }{
 	{"Revoke system access", "it"}, {"Return laptop and equipment", "it"},
 	{"Exit interview", "hr"}, {"Final settlement processing", "finance"},
 	{"Knowledge transfer", "team"}, {"Remove from all systems", "it"},
@@ -34,14 +34,14 @@ func Initiate(empID, lastDay, reason, initiatedBy string) *OffboardingFlow {
 	defer obMu.Unlock()
 	obCounter++
 	f := &OffboardingFlow{ID: fmt.Sprintf("off-%d", obCounter), EmployeeID: empID, LastDay: lastDay, Reason: reason, Status: "initiated", InitiatedBy: initiatedBy, InitiatedAt: time.Now().Format(time.RFC3339)}
-	for i, t := range defaultTasks {
+	for i, t := range offboardDefaults {
 		f.Tasks = append(f.Tasks, OffboardTask{ID: fmt.Sprintf("task-%d", i+1), Title: t.Title, Category: t.Category, Status: "pending"})
 	}
 	offboardings[f.ID] = f
 	return f
 }
 
-func CompleteTask(flowID, taskID string) error {
+func CompleteOffboardTask(flowID, taskID string) error {
 	obMu.Lock()
 	defer obMu.Unlock()
 	f := offboardings[flowID]
@@ -86,7 +86,7 @@ func RegisterOffboardingRoutes(mux *http.ServeMux) {
 		json.NewEncoder(w).Encode(f)
 	})
 	mux.HandleFunc("PUT /api/v1/hr/offboarding/{id}/tasks/{taskId}", func(w http.ResponseWriter, r *http.Request) {
-		if err := CompleteTask(r.PathValue("id"), r.PathValue("taskId")); err != nil {
+		if err := CompleteOffboardTask(r.PathValue("id"), r.PathValue("taskId")); err != nil {
 			http.Error(w, err.Error(), 404)
 			return
 		}

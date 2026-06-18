@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { api } from '../api'
 
 interface Checkpoint {
   id: string
@@ -16,14 +15,14 @@ export function CheckpointViewer() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/v1/checkpoints').then(r => {
+    fetch('http://localhost:7780/api/v1/checkpoints').then(r => r.json()).then(r => {
       setCheckpoints(r.data || [])
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
 
   const handleAction = (id: string, action: 'approve' | 'reject') => {
-    api.post(`/api/v1/checkpoints/${id}/${action}`).then(() => {
+    fetch(`http://localhost:7780/api/v1/checkpoints/${id}/${action}`, { method: 'POST' }).then(() => {
       setCheckpoints(prev => prev.map(cp =>
         cp.id === id ? { ...cp, status: action === 'approve' ? 'approved' : 'rejected' } : cp
       ))

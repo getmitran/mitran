@@ -2,12 +2,10 @@ package hr
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 )
 
 type Announcement struct {
@@ -16,14 +14,17 @@ type Announcement struct {
 }
 
 type AnnouncementStore struct {
-	mu    sync.Mutex
-	items []Announcement
+	mu      sync.Mutex
+	items   []Announcement
+	counter int
 }
 
 func (s *AnnouncementStore) Create(a Announcement) Announcement {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	a.ID, a.CreatedAt = uuid.NewString(), time.Now().UTC().Format(time.RFC3339)
+	s.counter++
+	a.ID = fmt.Sprintf("ann-%d", s.counter)
+	a.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 	s.items = append([]Announcement{a}, s.items...)
 	return a
 }
@@ -45,32 +46,23 @@ func (s *AnnouncementStore) Pin(id string) {
 	defer s.mu.Unlock()
 	for i := range s.items {
 		if s.items[i].ID == id {
-			s.items[i].Pinned = true; return
+			s.items[i].Pinned = true
+			return
 		}
 	}
 }
 
-func (s *AnnouncementStore) Archive(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for i := range s.items {
-		if s.items[i].ID == id {
-			s.items[i].ExpiresAt = time.Now().UTC().Format(time.RFC3339); return
-		}
-	}
-}
-
-func RegisterAnnouncementRoutes(r *mux.Router, s *AnnouncementStore) {
-	r.HandleFunc("/api/v1/hr/announcements", func(w http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
-			var a Announcement
-			json.NewDecoder(req.Body).Decode(&a)
-			json.NewEncoder(w).Encode(s.Create(a))
-		} else {
-			json.NewEncoder(w).Encode(s.List(req.URL.Query().Get("dept"), req.URL.Query().Get("active") != "false"))
-		}
+func RegisterAnnouncementRoutes(mux *http.ServeMux, s *AnnouncementStore) {
+	mux.HandleFunc("POST /api/v1/hr/announcements", func(w http.ResponseWriter, r *http.Request) {
+		var a Announcement
+		json.NewDecoder(r.Body).Decode(&a)
+		json.NewEncoder(w).Encode(s.Create(a))
 	})
-	r.HandleFunc("/api/v1/hr/announcements/{id}/pin", func(w http.ResponseWriter, req *http.Request) {
-		s.Pin(mux.Vars(req)["id"]); w.WriteHeader(204)
-	}).Methods("PUT")
+	mux.HandleFunc("GET /api/v1/hr/announcements", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(s.List(r.URL.Query().Get("dept"), r.URL.Query().Get("active") != "false"))
+	})
+	mux.HandleFunc("PUT /api/v1/hr/announcements/{id}/pin", func(w http.ResponseWriter, r *http.Request) {
+		s.Pin(r.PathValue("id"))
+		w.WriteHeader(204)
+	})
 }

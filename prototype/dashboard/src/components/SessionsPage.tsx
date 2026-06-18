@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { api } from '../api'
 
 interface Message {
   id: string
@@ -25,7 +24,7 @@ export function SessionsPage({ onResumeSession }: { onResumeSession?: (sessionId
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/api/v1/sessions').then(r => {
+    fetch('http://localhost:7780/api/v1/sessions').then(r => r.json()).then(r => {
       setSessions(r.data || [])
       setLoading(false)
     }).catch(() => setLoading(false))

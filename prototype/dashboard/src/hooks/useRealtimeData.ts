@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useWebSocket } from './useWebSocket'
 import { usePolling } from './usePolling'
 import { api } from '../api'

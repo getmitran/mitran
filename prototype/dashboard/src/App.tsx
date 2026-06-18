@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import PriorityQueue from './components/PriorityQueue'
-import AgentStatus from './components/AgentStatus'
 import { AgentStatusPage } from './components/AgentStatusPage'
 import CheckpointReview from './components/CheckpointReview'
 import InitWizard from './components/InitWizard'
@@ -36,7 +35,7 @@ export default function App() {
 
   const offline = !!(taskErr && agentErr && cpErr)
   const tasks = normalize<Task>(liveTasks, mockTasks)
-  const agents = normalize<Agent>(liveAgents, mockAgents)
+  const _agents = normalize<Agent>(liveAgents, mockAgents)
   const checkpoints = normalize<Checkpoint>(liveCps, mockCheckpoints)
 
   return (
@@ -51,7 +50,7 @@ export default function App() {
         {view === 'queue' && <PriorityQueue tasks={tasks} refetch={refetchTasks} />}
         {view === 'kanban' && <KanbanBoard tasks={tasks} refetch={refetchTasks} />}
         {view === 'chat' && <ChatInterface />}
-        {view === 'sessions' && <SessionsPage onResumeSession={(id, agent) => { setView('chat') }} />}
+        {view === 'sessions' && <SessionsPage onResumeSession={(_id, _agent) => { setView('chat') }} />}
         {view === 'agents' && <AgentStatusPage />}
         {view === 'checkpoints' && <CheckpointReview checkpoints={checkpoints} refetch={refetchCps} />}
         {view === 'tickets' && <TicketingApp />}
@@ -63,7 +62,7 @@ export default function App() {
   )
 }
 
-function Placeholder({ title }: { title: string }) {
+function _Placeholder({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center h-full">
       <p className="text-gray-500 text-lg">{title} — coming soon</p>

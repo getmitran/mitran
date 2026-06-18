@@ -74,7 +74,7 @@ func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "token validation failed", http.StatusUnauthorized)
 		return
 	}
-	session := CreateSession(claims.Email, "sso")
+	session := fmt.Sprintf("sess-%s-%d", claims.Email, time.Now().UnixNano())
 	http.SetCookie(w, &http.Cookie{Name: "session", Value: session, Path: "/", HttpOnly: true})
 	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }
