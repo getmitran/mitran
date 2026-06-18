@@ -96,6 +96,6 @@ func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	if nOk { delete(ssoNonces, claims.Nonce) }
 	statesMu.Unlock()
 	if !nOk || time.Now().After(nExp) { http.Error(w, "invalid nonce", http.StatusUnauthorized); return }
-	http.SetCookie(w, &http.Cookie{Name: "session", Value: makeSessionToken(claims.Email), Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{Name: "session", Value: makeSessionToken(claims.Email), Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }

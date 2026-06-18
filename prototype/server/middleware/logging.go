@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"mitran/metrics"
 )
+
+var M *metrics.Metrics
 
 type contextKey string
 
@@ -32,8 +36,16 @@ func RequestLogger(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), RequestIDKey, reqID)
 		r = r.WithContext(ctx)
 
+		w.Header().Set("X-Request-ID", reqID)
 		sw := &statusWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(sw, r)
-		fmt.Printf("[%s] %s %s %s %d %s\n", start.Format(time.RFC3339), reqID, r.Method, r.URL.Path, sw.status, time.Since(start))
+		elapsed := time.Since(start)
+		if M != nil {
+			M.RecordRequest(elapsed)
+			if sw.status >= 500 {
+				M.RecordError()
+			}
+		}
+		fmt.Printf("[%s] %s %s %s %d %s\n", start.Format(time.RFC3339), reqID, r.Method, r.URL.Path, sw.status, elapsed)
 	})
 }

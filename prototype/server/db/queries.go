@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Task struct {
+type SQLTask struct {
 	ID           string
 	Title        string
 	Description  string
@@ -23,7 +23,7 @@ type Task struct {
 	UpdatedAt    time.Time
 }
 
-func (s *SQLiteDB) InsertTask(t *Task) error {
+func (s *SQLiteDB) InsertTask(t *SQLTask) error {
 	_, err := s.db.Exec(`INSERT INTO tasks (id, title, description, status, priority, agent, assignee, labels, dependencies, result)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		t.ID, t.Title, t.Description, t.Status, t.Priority, t.Agent, t.Assignee, t.Labels, t.Dependencies, t.Result)
@@ -35,7 +35,7 @@ func (s *SQLiteDB) InsertTask(t *Task) error {
 	return err
 }
 
-func (s *SQLiteDB) UpdateTask(t *Task) error {
+func (s *SQLiteDB) UpdateTask(t *SQLTask) error {
 	_, err := s.db.Exec(`UPDATE tasks SET title=?, description=?, status=?, priority=?, agent=?, assignee=?, labels=?, dependencies=?, result=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=?`,
 		t.Title, t.Description, t.Status, t.Priority, t.Agent, t.Assignee, t.Labels, t.Dependencies, t.Result, t.ID)
@@ -60,8 +60,8 @@ func (s *SQLiteDB) DeleteTask(id string) error {
 	return err
 }
 
-func (s *SQLiteDB) GetTask(id string) (*Task, error) {
-	t := &Task{}
+func (s *SQLiteDB) GetTask(id string) (*SQLTask, error) {
+	t := &SQLTask{}
 	err := s.db.QueryRow(`SELECT id, title, COALESCE(description,''), status, priority, COALESCE(agent,''), COALESCE(assignee,''), COALESCE(labels,''), COALESCE(dependencies,''), COALESCE(result,''), created_at, updated_at FROM tasks WHERE id = ?`, id).
 		Scan(&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, &t.Agent, &t.Assignee, &t.Labels, &t.Dependencies, &t.Result, &t.CreatedAt, &t.UpdatedAt)
 	if err == sql.ErrNoRows {
@@ -70,7 +70,7 @@ func (s *SQLiteDB) GetTask(id string) (*Task, error) {
 	return t, err
 }
 
-func (s *SQLiteDB) ListTasks(status string) ([]*Task, error) {
+func (s *SQLiteDB) ListTasks(status string) ([]*SQLTask, error) {
 	q := `SELECT id, title, COALESCE(description,''), status, priority, COALESCE(agent,''), COALESCE(assignee,''), COALESCE(labels,''), COALESCE(dependencies,''), COALESCE(result,''), created_at, updated_at FROM tasks`
 	var rows *sql.Rows
 	var err error
@@ -87,7 +87,7 @@ func (s *SQLiteDB) ListTasks(status string) ([]*Task, error) {
 	return scanTasks(rows)
 }
 
-func (s *SQLiteDB) SearchTasks(query string) ([]*Task, error) {
+func (s *SQLiteDB) SearchTasks(query string) ([]*SQLTask, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return s.ListTasks("")
@@ -103,10 +103,10 @@ func (s *SQLiteDB) SearchTasks(query string) ([]*Task, error) {
 	return scanTasks(rows)
 }
 
-func scanTasks(rows *sql.Rows) ([]*Task, error) {
-	var tasks []*Task
+func scanTasks(rows *sql.Rows) ([]*SQLTask, error) {
+	var tasks []*SQLTask
 	for rows.Next() {
-		t := &Task{}
+		t := &SQLTask{}
 		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.Status, &t.Priority, &t.Agent, &t.Assignee, &t.Labels, &t.Dependencies, &t.Result, &t.CreatedAt, &t.UpdatedAt); err != nil {
 			return nil, err
 		}

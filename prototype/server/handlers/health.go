@@ -10,16 +10,30 @@ func Healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+func checkHealth(url string) bool {
+	resp, err := (&http.Client{Timeout: 2 * time.Second}).Get(url)
+	return err == nil && resp.StatusCode == http.StatusOK
+}
+
 func Readyz(w http.ResponseWriter, r *http.Request) {
-	url := os.Getenv("WORKER_URL")
-	if url == "" {
-		url = "http://localhost:8888"
+	workerURL := os.Getenv("WORKER_URL")
+	if workerURL == "" {
+		workerURL = "http://localhost:8888"
 	}
-	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get(url + "/health")
-	if err != nil || resp.StatusCode != http.StatusOK {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not_ready"})
-		return
+	chromaURL := os.Getenv("CHROMADB_URL")
+	if chromaURL == "" {
+		chromaURL = "http://localhost:8000"
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
+	checks := map[string]bool{
+		"worker":   checkHealth(workerURL + "/health"),
+		"chromadb": checkHealth(chromaURL + "/api/v1/heartbeat"),
+	}
+	status, code := "ready", http.StatusOK
+	for _, ok := range checks {
+		if !ok {
+			status, code = "not_ready", http.StatusServiceUnavailable
+			break
+		}
+	}
+	writeJSON(w, code, map[string]interface{}{"status": status, "checks": checks})
 }

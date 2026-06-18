@@ -15,6 +15,7 @@ import (
 	"github.com/getmitran/mitran/server/middleware"
 	"github.com/getmitran/mitran/server/scheduler"
 	"github.com/getmitran/mitran/server/settings"
+	"github.com/getmitran/mitran/server/queue"
 	"github.com/getmitran/mitran/server/websocket"
 	"github.com/getmitran/mitran/server/workspace"
 )
@@ -61,8 +62,9 @@ func main() {
 	mux.Handle("/api/v1/memory/corrections", memHandler)
 	mux.Handle("/api/v1/memory/corrections/", memHandler)
 
-	mux.Handle("/api/v1/tasks", &handlers.TaskHandler{Store: store})
-	mux.Handle("/api/v1/tasks/", &handlers.TaskHandler{Store: store})
+	taskQueue := queue.New()
+	mux.Handle("/api/v1/tasks", &handlers.TaskHandler{Store: store, Queue: taskQueue})
+	mux.Handle("/api/v1/tasks/", &handlers.TaskHandler{Store: store, Queue: taskQueue})
 	mux.Handle("/api/v1/checkpoints", &handlers.CheckpointHandler{Store: store})
 	mux.Handle("/api/v1/checkpoints/", &handlers.CheckpointHandler{Store: store})
 	mux.Handle("/api/v1/agents", &handlers.AgentHandler{Store: store})

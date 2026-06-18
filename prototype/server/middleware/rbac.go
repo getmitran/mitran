@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"mitran/auth"
 )
 
 type Role string
@@ -51,6 +53,9 @@ func extractUser(req *http.Request) string {
 	}
 	expiry, err := strconv.ParseInt(p[1], 10, 64)
 	if err != nil || time.Now().Unix() > expiry {
+		return ""
+	}
+	if auth.IsRevoked(c.Value) {
 		return ""
 	}
 	return p[0]

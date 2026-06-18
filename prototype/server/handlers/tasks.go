@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/getmitran/mitran/server/db"
+	"github.com/getmitran/mitran/server/queue"
 )
 
 type TaskHandler struct {
 	Store *db.Store
+	Queue *queue.TaskQueue
 }
 
 type createTaskReq struct {
@@ -52,6 +54,10 @@ func (h *TaskHandler) list(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandler) create(w http.ResponseWriter, r *http.Request) {
+	if h.Queue != nil && h.Queue.IsFull() {
+		writeErr(w, http.StatusServiceUnavailable, "server busy, try again later")
+		return
+	}
 	var req createTaskReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, err.Error())
@@ -73,6 +79,12 @@ func (h *TaskHandler) create(w http.ResponseWriter, r *http.Request) {
 	if err := h.Store.AddTask(t); err != nil {
 		writeErr(w, http.StatusInternalServerError, err.Error())
 		return
+	}
+	if h.Queue != nil {
+		if err := h.Queue.Enqueue(queue.Task{ID: t.ID, Payload: t}); err != nil {
+			writeErr(w, http.StatusServiceUnavailable, "server busy, try again later")
+			return
+		}
 	}
 	writeJSON(w, http.StatusCreated, t)
 }
