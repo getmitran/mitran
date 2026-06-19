@@ -29,7 +29,15 @@ export default function PluginsPage() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Plugins</h1>
         <button
-          onClick={() => alert('Install plugin flow coming soon')}
+          onClick={() => {
+            const name = prompt('Plugin package name:');
+            if (!name) return;
+            fetch('http://localhost:7780/api/v1/plugins', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name }),
+            }).then(() => window.location.reload());
+          }}
           className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
         >
           Install Plugin

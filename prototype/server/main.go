@@ -23,6 +23,7 @@ import (
 	"github.com/getmitran/mitran/server/settings"
 	"github.com/getmitran/mitran/server/shutdown"
 	"github.com/getmitran/mitran/server/queue"
+	"github.com/getmitran/mitran/server/streaming"
 	"github.com/getmitran/mitran/server/websocket"
 	"github.com/getmitran/mitran/server/workspace"
 )
@@ -59,6 +60,10 @@ func main() {
 	// WebSocket hub for real-time events
 	hub := websocket.NewHub()
 	mux.HandleFunc("/api/v1/ws", websocket.HandleWS(hub))
+
+	// SSE streaming hub for log/task events
+	sseHub := streaming.NewHub()
+	mux.HandleFunc("/api/v1/events", streaming.Handler(sseHub))
 
 	// Memory system
 	memStore, err := memory.NewStore(filepath.Join(dataDir, "memory"))
@@ -142,7 +147,7 @@ func main() {
 	// Start task dispatcher
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
-	go dispatcher.Start(ctx, store)
+	go dispatcher.Start(ctx, store, sseHub)
 
 	// Start scheduler
 	sched := &scheduler.Scheduler{Store: store, WorkspaceDir: cfg.ProjectsDir}

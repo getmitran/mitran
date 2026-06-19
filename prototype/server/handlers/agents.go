@@ -33,7 +33,7 @@ func (h *AgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *AgentHandler) list(w http.ResponseWriter, r *http.Request) {
 	h.Store.Mu.RLock()
 	defer h.Store.Mu.RUnlock()
-	agents := h.Store.Agents
+	agents := h.Store.ListAgents()
 	if agents == nil {
 		agents = []db.Agent{}
 	}

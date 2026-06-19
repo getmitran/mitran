@@ -58,7 +58,7 @@ func (h *ProjectHandler) create(w http.ResponseWriter, r *http.Request) {
 func (h *ProjectHandler) list(w http.ResponseWriter, r *http.Request) {
 	h.Store.Mu.RLock()
 	defer h.Store.Mu.RUnlock()
-	writeJSON(w, http.StatusOK, h.Store.Projects)
+	writeJSON(w, http.StatusOK, h.Store.ListProjects())
 }
 
 func (h *ProjectHandler) get(w http.ResponseWriter, r *http.Request, id string) {

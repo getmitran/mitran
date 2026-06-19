@@ -11,6 +11,7 @@ import (
 
 	"github.com/getmitran/mitran/server/db"
 	"github.com/getmitran/mitran/server/logger"
+	"github.com/getmitran/mitran/server/streaming"
 )
 
 type execRequest struct {
@@ -29,7 +30,7 @@ func workerURL() string {
 
 // Start polls the store for queued tasks and dispatches them to the worker.
 // It blocks until ctx is cancelled.
-func Start(ctx context.Context, store *db.Store) {
+func Start(ctx context.Context, store *db.Store, sse *streaming.Hub) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
@@ -44,12 +45,12 @@ func Start(ctx context.Context, store *db.Store) {
 			logger.Info("dispatcher shutting down")
 			return
 		case <-ticker.C:
-			dispatch(ctx, store, client, url)
+			dispatch(ctx, store, client, url, sse)
 		}
 	}
 }
 
-func dispatch(ctx context.Context, store *db.Store, client *http.Client, url string) {
+func dispatch(ctx context.Context, store *db.Store, client *http.Client, url string, sse *streaming.Hub) {
 	tasks := store.ListTasks(db.StatusQueued, "")
 	for _, t := range tasks {
 		select {
@@ -63,6 +64,7 @@ func dispatch(ctx context.Context, store *db.Store, client *http.Client, url str
 			task.Status = db.StatusRunning
 			task.StartedAt = &now
 		})
+		broadcastStatus(sse, t.ID, string(db.StatusRunning))
 
 		body, _ := json.Marshal(execRequest{
 			TaskID:  t.ID,
@@ -73,14 +75,14 @@ func dispatch(ctx context.Context, store *db.Store, client *http.Client, url str
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 		if err != nil {
-			markFailed(store, t.ID, err)
+			markFailed(store, t.ID, err, sse)
 			continue
 		}
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
 		if err != nil {
-			markFailed(store, t.ID, err)
+			markFailed(store, t.ID, err, sse)
 			continue
 		}
 
@@ -100,17 +102,24 @@ func dispatch(ctx context.Context, store *db.Store, client *http.Client, url str
 				task.CompletedAt = &completed
 				task.Resources = append(task.Resources, summary)
 			})
+			broadcastStatus(sse, t.ID, "completed")
 		} else {
 			resp.Body.Close()
-			markFailed(store, t.ID, fmt.Errorf("worker returned status %d", resp.StatusCode))
+			markFailed(store, t.ID, fmt.Errorf("worker returned status %d", resp.StatusCode), sse)
 		}
 	}
 }
 
-func markFailed(store *db.Store, id string, err error) {
+func markFailed(store *db.Store, id string, err error, sse *streaming.Hub) {
 	logger.Error("task dispatch failed", "task_id", id, "error", err)
 	_ = store.UpdateTask(id, func(task *db.Task) {
 		task.Status = db.StatusFailed
 		task.Resources = append(task.Resources, "error: "+err.Error())
 	})
+	broadcastStatus(sse, id, string(db.StatusFailed))
+}
+
+func broadcastStatus(sse *streaming.Hub, taskID string, status string) {
+	data, _ := json.Marshal(map[string]string{"task_id": taskID, "status": status})
+	sse.Broadcast("task_update", string(data))
 }
