@@ -128,14 +128,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Scan server Dockerfile
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.18.0
         with:
           scan-type: config
           scan-ref: prototype/server/Dockerfile
           severity: HIGH,CRITICAL
           exit-code: "1"
       - name: Scan agent-worker Dockerfile
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.18.0
         with:
           scan-type: config
           scan-ref: prototype/agent-worker/Dockerfile
