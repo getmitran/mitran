@@ -62,6 +62,6 @@ curl http://localhost:7780/api/v1/tasks/task_01/result
 
 ## Next Steps
 
-- Open the dashboard at `http://localhost:7780` to see all agents in action
+- Open the dashboard at `http://localhost:5173` to see all agents in action
 - Try other agents: `docs`, `ops`, `review`, `cicd`, `tickets`, `wiki`, `hr`
 - Read the [Architecture Guide](./10-openclaw-architecture-v2.md) for deeper understanding
