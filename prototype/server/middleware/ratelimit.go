@@ -62,10 +62,7 @@ func RateLimitMiddleware(rps float64, burst int) func(http.Handler) http.Handler
 	rl := &RateLimiter{buckets: make(map[string]*Bucket), rps: rps, burst: burst}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := r.Header.Get("X-User")
-			if key == "" {
-				key = r.RemoteAddr
-			}
+			key := r.RemoteAddr
 			if tenant := r.Header.Get("X-Tenant-ID"); tenant != "" {
 				key = tenant + ":" + key
 			}

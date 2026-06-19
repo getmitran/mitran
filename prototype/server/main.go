@@ -140,7 +140,7 @@ func main() {
 		port = p
 	}
 
-	handler := middleware.CORS(middleware.RequestLogger(mux))
+	handler := middleware.CORS(middleware.SecurityHeaders(middleware.CSP(middleware.RateLimitMiddleware(100, 200)(middleware.RequestLogger(mux)))))
 	logger.Info("server starting", "port", port, "data_dir", dataDir)
 	fmt.Printf("\n  ╔══════════════════════════════════════════╗\n")
 	fmt.Printf("  ║   Mitran Core Engine v0.1.0              ║\n")

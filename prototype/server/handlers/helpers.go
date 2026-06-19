@@ -31,6 +31,6 @@ func genID() string {
 	idMu.Lock()
 	defer idMu.Unlock()
 	b := make([]byte, 8)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil { panic("crypto/rand failed: " + err.Error()) }
 	return hex.EncodeToString(b)
 }

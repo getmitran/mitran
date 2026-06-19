@@ -121,6 +121,6 @@ func generateID() string {
 
 func randomHex(n int) string {
 	b := make([]byte, n/2)
-	crypto_rand.Read(b)
+	if _, err := crypto_rand.Read(b); err != nil { panic("crypto/rand failed: " + err.Error()) }
 	return hex.EncodeToString(b)
 }
