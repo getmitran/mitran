@@ -15,6 +15,7 @@ type Store interface {
 
 // MemoryStore is a dev-only in-memory session store.
 type MemoryStore struct {
+	stopOnce sync.Once
 	mu      sync.RWMutex
 	entries map[string]memEntry
 	done    chan struct{}
@@ -78,9 +79,11 @@ func (m *MemoryStore) StartReaper(interval time.Duration) {
 
 // Stop halts the background reaper.
 func (m *MemoryStore) Stop() {
-	if m.done != nil {
-		close(m.done)
-	}
+	m.stopOnce.Do(func() {
+		if m.done != nil {
+			close(m.done)
+		}
+	})
 }
 
 // RedisStore is a placeholder for production Redis-backed sessions.

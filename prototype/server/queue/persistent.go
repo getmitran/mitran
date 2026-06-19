@@ -115,7 +115,8 @@ func (q *FileQueue) rewrite() error {
 		return err
 	}
 	for _, t := range q.tasks {
-		data, _ := json.Marshal(t)
+		data, err := json.Marshal(t)
+		if err != nil { continue }
 		f.Write(append(data, '\n'))
 	}
 	if err := f.Sync(); err != nil {
