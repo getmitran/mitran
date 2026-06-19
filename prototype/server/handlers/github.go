@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 var githubAPIURL = "https://api.github.com"
@@ -35,12 +37,12 @@ func githubRequest(method, path string, body io.Reader) (*http.Response, error) 
 // POST /api/v1/integrations/github/webhook
 func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to read body", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("failed to read body"))
 		return
 	}
 	defer r.Body.Close()
@@ -48,7 +50,7 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	event := r.Header.Get("X-GitHub-Event")
 	var payload map[string]interface{}
 	if err := json.Unmarshal(body, &payload); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid JSON"))
 		return
 	}
 
@@ -65,18 +67,18 @@ func HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/integrations/github/repos
 func HandleGitHubListRepos(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	org := r.URL.Query().Get("org")
 	if org == "" {
-		http.Error(w, "org query param required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("org query param required"))
 		return
 	}
 
 	resp, err := githubRequest("GET", fmt.Sprintf("/orgs/%s/repos?per_page=100", org), nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadGateway)
+		apierr.WriteError(w, apierr.Internal("github api error"))
 		return
 	}
 	defer resp.Body.Close()
@@ -89,7 +91,7 @@ func HandleGitHubListRepos(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/integrations/github/status
 func HandleGitHubStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 

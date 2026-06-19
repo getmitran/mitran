@@ -5,37 +5,39 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 var slackBotToken = os.Getenv("SLACK_BOT_TOKEN")
 
 type SlackNotifyRequest struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text"`
+	Channel  string `json:"channel"`
+	Text     string `json:"text"`
 	ThreadTS string `json:"thread_ts,omitempty"`
 }
 
 type SlackWebhookEvent struct {
-	Type      string `json:"type"`
-	Challenge string `json:"challenge,omitempty"`
+	Type      string          `json:"type"`
+	Challenge string          `json:"challenge,omitempty"`
 	Event     json.RawMessage `json:"event,omitempty"`
 }
 
 // POST /api/v1/integrations/slack/notify
 func HandleSlackNotify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 
 	var req SlackNotifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 		return
 	}
 
 	if req.Channel == "" || req.Text == "" {
-		http.Error(w, "channel and text required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("channel and text required"))
 		return
 	}
 
@@ -51,7 +53,7 @@ func HandleSlackNotify(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := http.DefaultClient.Do(slackReq)
 	if err != nil {
-		http.Error(w, "slack api error: "+err.Error(), http.StatusBadGateway)
+		apierr.WriteError(w, apierr.Internal("slack api error"))
 		return
 	}
 	defer resp.Body.Close()
@@ -65,13 +67,13 @@ func HandleSlackNotify(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/integrations/slack/webhook
 func HandleSlackWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 
 	var event SlackWebhookEvent
 	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-		http.Error(w, "invalid payload", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid payload"))
 		return
 	}
 
@@ -90,7 +92,7 @@ func HandleSlackWebhook(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/integrations/slack/status
 func HandleSlackStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 

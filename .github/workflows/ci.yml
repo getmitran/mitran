@@ -62,13 +62,13 @@ jobs:
       - name: Run tests with coverage
         run: go test -coverprofile=coverage.out -covermode=atomic ./auth/ ./session/ ./queue/ ./audit/ ./handlers/ ./middleware/ ./apierr/
         working-directory: prototype/server
-      - name: Enforce minimum coverage (40%)
+      - name: Enforce minimum coverage (60%)
         working-directory: prototype/server
         run: |
           COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "Total coverage: ${COVERAGE}%"
-          if [ "$(echo "$COVERAGE < 40" | bc -l)" -eq 1 ]; then
-            echo "::error::Coverage ${COVERAGE}% is below minimum 40%"
+          if [ "$(echo "$COVERAGE < 60" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${COVERAGE}% is below minimum 60%"
             exit 1
           fi
 
@@ -115,6 +115,12 @@ jobs:
         working-directory: prototype/dashboard
       - run: npm run build
         working-directory: prototype/dashboard
+      - name: Run tests with coverage
+        working-directory: prototype/dashboard
+        run: npx vitest run --coverage
+      - name: Enforce minimum frontend coverage (50%)
+        working-directory: prototype/dashboard
+        run: node -e "const c=require('./coverage/coverage-summary.json');const p=c.total.lines.pct;if(p<50){console.error('Frontend coverage '+p+'% < 50% minimum');process.exit(1)}"
 
   security-scan:
     needs: [build-go, build-frontend]
