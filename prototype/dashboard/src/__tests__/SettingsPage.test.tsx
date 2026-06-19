@@ -5,5 +5,6 @@ import SettingsPage from '../components/SettingsPage';
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }))); });
 
 describe('SettingsPage', () => {
-  it('renders', () => { render(<SettingsPage />); expect(document.body.innerHTML).not.toBe(''); });
+  it('renders settings heading', () => { render(<SettingsPage />); expect(screen.getByText(/settings/i)).toBeDefined(); });
+  it('fetches config on mount', () => { render(<SettingsPage />); expect(fetch).toHaveBeenCalled(); });
 });
