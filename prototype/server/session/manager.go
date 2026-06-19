@@ -116,7 +116,7 @@ func (m *Manager) save() {
 }
 
 func generateID() string {
-	return time.Now().Format("20060102-150405") + "-" + randomHex(4)
+	return time.Now().Format("20060102-150405") + "-" + randomHex(16)
 }
 
 func randomHex(n int) string {

@@ -15,7 +15,10 @@ const nonceKey cspContextKey = "csp-nonce"
 func CSP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b := make([]byte, 16)
-		_, _ = rand.Read(b)
+		if _, err := rand.Read(b); err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 		nonce := base64.StdEncoding.EncodeToString(b)
 
 		ctx := context.WithValue(r.Context(), nonceKey, nonce)

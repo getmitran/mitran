@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/getmitran/mitran/server/apierr"
 	"github.com/google/uuid"
 )
 
@@ -38,14 +39,14 @@ func (h *WebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		h.remove(w, r)
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 	}
 }
 
 func (h *WebhookHandler) register(w http.ResponseWriter, r *http.Request) {
 	var wh Webhook
 	if err := json.NewDecoder(r.Body).Decode(&wh); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	wh.ID = uuid.New().String()
@@ -74,7 +75,7 @@ func (h *WebhookHandler) remove(w http.ResponseWriter, r *http.Request) {
 	h.mu.Lock()
 	if _, ok := h.webhooks[id]; !ok {
 		h.mu.Unlock()
-		http.Error(w, "not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("not found"))
 		return
 	}
 	delete(h.webhooks, id)

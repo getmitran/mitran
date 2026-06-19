@@ -65,8 +65,9 @@ func main() {
 	mux.Handle("/api/v1/memory/corrections/", memHandler)
 
 	taskQueue := queue.New()
-	mux.Handle("/api/v1/tasks", &handlers.TaskHandler{Store: store, Queue: taskQueue})
-	mux.Handle("/api/v1/tasks/", &handlers.TaskHandler{Store: store, Queue: taskQueue})
+	taskHandler := &handlers.TaskHandler{Store: store, Queue: taskQueue}
+	mux.Handle("/api/v1/tasks", middleware.ValidateJSON(taskHandler))
+	mux.Handle("/api/v1/tasks/", middleware.ValidateJSON(taskHandler))
 	mux.Handle("/api/v1/checkpoints", &handlers.CheckpointHandler{Store: store})
 	mux.Handle("/api/v1/checkpoints/", &handlers.CheckpointHandler{Store: store})
 	mux.Handle("/api/v1/agents", &handlers.AgentHandler{Store: store})

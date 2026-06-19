@@ -3,11 +3,12 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/getmitran/mitran/server/apierr"
 	"github.com/google/uuid"
-	"strings"
 )
 
 type WorkflowStep struct {
@@ -37,7 +38,7 @@ func NewWorkflowHandler() *WorkflowHandler {
 func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var wf Workflow
 	if err := json.NewDecoder(r.Body).Decode(&wf); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	wf.ID = uuid.New().String()
@@ -67,7 +68,7 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 	wf, ok := h.workflows[id]
 	h.mu.RUnlock()
 	if !ok {
-		http.Error(w, "not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("not found"))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -79,14 +80,13 @@ func (h *WorkflowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	h.mu.Lock()
 	if _, ok := h.workflows[id]; !ok {
 		h.mu.Unlock()
-		http.Error(w, "not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("not found"))
 		return
 	}
 	delete(h.workflows, id)
 	h.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
 }
-
 
 func extractID(path string) string {
 	parts := strings.Split(strings.TrimSuffix(path, "/"), "/")

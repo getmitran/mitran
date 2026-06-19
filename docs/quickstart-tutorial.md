@@ -12,6 +12,8 @@ git clone https://github.com/getmitran/mitran && cd mitran
 docker compose up -d
 ```
 
+Open http://localhost:5173 for the dashboard UI.
+
 Wait ~10 seconds for all services to initialize.
 
 ## 2. Verify Health
@@ -62,4 +64,4 @@ curl http://localhost:7780/api/v1/tasks/task_01/result
 
 - Open the dashboard at `http://localhost:7780` to see all agents in action
 - Try other agents: `docs`, `ops`, `review`, `cicd`, `tickets`, `wiki`, `hr`
-- Read the [Architecture Guide](./10-openclaw-architecture.md) for deeper understanding
+- Read the [Architecture Guide](./10-openclaw-architecture-v2.md) for deeper understanding

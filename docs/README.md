@@ -4,6 +4,7 @@
 
 | Document | Description |
 |----------|-------------|
+| [Quickstart Tutorial](quickstart-tutorial.md) | Build your first agent in 5 minutes |
 | [Vision](01-vision.md) | Product vision, mission, and long-term goals |
 | [Pitch Deck](05-pitch-deck.md) | Investor/stakeholder presentation slides |
 | [Running Guide](08-running-guide.md) | How to run Mitran locally end-to-end |

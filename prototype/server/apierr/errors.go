@@ -35,6 +35,10 @@ func Internal(msg string) *APIError {
 	return &APIError{Code: 500, Type: "internal_error", Message: msg}
 }
 
+func MethodNotAllowed(msg string) *APIError {
+	return &APIError{Code: 405, Type: "method_not_allowed", Message: msg}
+}
+
 func Conflict(msg string) *APIError {
 	return &APIError{Code: 409, Type: "conflict", Message: msg}
 }

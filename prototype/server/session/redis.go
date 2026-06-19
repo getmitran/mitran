@@ -17,6 +17,7 @@ type Store interface {
 type MemoryStore struct {
 	mu      sync.RWMutex
 	entries map[string]memEntry
+	done    chan struct{}
 }
 
 type memEntry struct {
@@ -51,6 +52,37 @@ func (m *MemoryStore) Delete(token string) error {
 	return nil
 }
 
+// StartReaper spawns a background goroutine that periodically removes expired sessions.
+func (m *MemoryStore) StartReaper(interval time.Duration) {
+	m.done = make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				now := time.Now()
+				m.mu.Lock()
+				for k, e := range m.entries {
+					if now.After(e.expiry) {
+						delete(m.entries, k)
+					}
+				}
+				m.mu.Unlock()
+			case <-m.done:
+				return
+			}
+		}
+	}()
+}
+
+// Stop halts the background reaper.
+func (m *MemoryStore) Stop() {
+	if m.done != nil {
+		close(m.done)
+	}
+}
+
 // RedisStore is a placeholder for production Redis-backed sessions.
 type RedisStore struct {
 	Addr string
@@ -67,5 +99,7 @@ func NewStore() Store {
 	if os.Getenv("MITRAN_SESSION_BACKEND") == "redis" {
 		return &RedisStore{Addr: os.Getenv("MITRAN_REDIS_ADDR")}
 	}
-	return &MemoryStore{entries: make(map[string]memEntry)}
+	ms := &MemoryStore{entries: make(map[string]memEntry)}
+	ms.StartReaper(5 * time.Minute)
+	return ms
 }

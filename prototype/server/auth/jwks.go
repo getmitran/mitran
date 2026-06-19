@@ -11,8 +11,21 @@ import (
 	"math/big"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
+
+var (
+	jwksCacheMu    sync.Mutex
+	jwksCacheData  = make(map[string]*jwksCacheEntry)
+)
+
+type jwksCacheEntry struct {
+	jwks      *JWKS
+	fetchedAt time.Time
+}
+
+const jwksCacheTTL = 1 * time.Hour
 
 type JWK struct {
 	Kid string `json:"kid"`
@@ -27,6 +40,13 @@ type JWKS struct {
 }
 
 func FetchJWKS(issuerURL string) (*JWKS, error) {
+	jwksCacheMu.Lock()
+	if entry, ok := jwksCacheData[issuerURL]; ok && time.Since(entry.fetchedAt) < jwksCacheTTL {
+		jwksCacheMu.Unlock()
+		return entry.jwks, nil
+	}
+	jwksCacheMu.Unlock()
+
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(issuerURL + "/.well-known/jwks.json")
 	if err != nil {
@@ -40,6 +60,11 @@ func FetchJWKS(issuerURL string) (*JWKS, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
 		return nil, fmt.Errorf("jwks decode failed: %w", err)
 	}
+
+	jwksCacheMu.Lock()
+	jwksCacheData[issuerURL] = &jwksCacheEntry{jwks: &jwks, fetchedAt: time.Now()}
+	jwksCacheMu.Unlock()
+
 	return &jwks, nil
 }
 

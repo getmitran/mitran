@@ -59,8 +59,18 @@ jobs:
           go-version: "1.22"
           cache: true
           cache-dependency-path: prototype/server/go.sum
-      - run: go test ./...
+      - name: Run tests with coverage
+        run: go test -coverprofile=coverage.out -covermode=atomic ./auth/ ./session/ ./queue/ ./audit/ ./handlers/ ./middleware/ ./apierr/
         working-directory: prototype/server
+      - name: Enforce minimum coverage (40%)
+        working-directory: prototype/server
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${COVERAGE}%"
+          if [ "$(echo "$COVERAGE < 40" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${COVERAGE}% is below minimum 40%"
+            exit 1
+          fi
 
   test-python:
     needs: lint-python

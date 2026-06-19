@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type UsageRecord struct {
@@ -29,7 +31,7 @@ func (h *CostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/api/v1/usage/summary":
 		if r.Method != http.MethodGet {
-			writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 			return
 		}
 		h.summary(w, r)
@@ -40,21 +42,21 @@ func (h *CostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			h.list(w, r)
 		default:
-			writeErr(w, http.StatusMethodNotAllowed, "method not allowed")
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		}
 	default:
-		writeErr(w, http.StatusNotFound, "not found")
+		apierr.WriteError(w, apierr.NotFound("not found"))
 	}
 }
 
 func (h *CostHandler) record(w http.ResponseWriter, r *http.Request) {
 	var rec UsageRecord
 	if err := json.NewDecoder(r.Body).Decode(&rec); err != nil {
-		writeErr(w, http.StatusBadRequest, "invalid json")
+		apierr.WriteError(w, apierr.BadRequest("invalid json"))
 		return
 	}
 	if rec.Model == "" {
-		writeErr(w, http.StatusBadRequest, "model required")
+		apierr.WriteError(w, apierr.BadRequest("model required"))
 		return
 	}
 	if rec.Timestamp.IsZero() {

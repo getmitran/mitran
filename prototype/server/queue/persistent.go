@@ -118,6 +118,10 @@ func (q *FileQueue) rewrite() error {
 		data, _ := json.Marshal(t)
 		f.Write(append(data, '\n'))
 	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
 	f.Close()
 	if err := os.Rename(tmp, q.path); err != nil {
 		return err

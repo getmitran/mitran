@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 // OnboardingHandler manages project onboarding flows.
@@ -22,6 +24,6 @@ func (h *OnboardingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"steps":  []string{"init", "configure", "deploy", "verify"},
 		})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 	}
 }
