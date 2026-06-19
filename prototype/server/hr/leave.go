@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type LeaveRequest struct {
@@ -76,7 +77,7 @@ func (s *LeaveStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/hr/leave", func(w http.ResponseWriter, r *http.Request) {
 		var req LeaveRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 			return
 		}
 		id := s.Submit(&req)
@@ -90,11 +91,11 @@ func (s *LeaveStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/hr/leave/{id}/approve", func(w http.ResponseWriter, r *http.Request) {
 		var b struct{ ApproverID string }
 		json.NewDecoder(r.Body).Decode(&b)
-		if err := s.Approve(r.PathValue("id"), b.ApproverID); err != nil { http.Error(w, err.Error(), 404) }
+		if err := s.Approve(r.PathValue("id"), b.ApproverID); err != nil { apierr.WriteError(w, apierr.NotFound(err.Error())) }
 	})
 	mux.HandleFunc("PUT /api/v1/hr/leave/{id}/deny", func(w http.ResponseWriter, r *http.Request) {
 		var b struct{ Reason string }
 		json.NewDecoder(r.Body).Decode(&b)
-		if err := s.Deny(r.PathValue("id"), b.Reason); err != nil { http.Error(w, err.Error(), 404) }
+		if err := s.Deny(r.PathValue("id"), b.Reason); err != nil { apierr.WriteError(w, apierr.NotFound(err.Error())) }
 	})
 }

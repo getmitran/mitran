@@ -3,6 +3,7 @@ package hr
 import (
 	"encoding/json"
 	"net/http"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type OrgNode struct {
@@ -65,7 +66,7 @@ func RegisterOrgChartRoutes(mux *http.ServeMux, dir *Directory) {
 	mux.HandleFunc("GET /api/v1/hr/org", func(w http.ResponseWriter, r *http.Request) {
 		root := r.URL.Query().Get("root")
 		if root == "" {
-			http.Error(w, `{"error":"root param required"}`, 400)
+			apierr.WriteError(w, apierr.BadRequest("root param required"))
 			return
 		}
 		json.NewEncoder(w).Encode(BuildOrgChart(dir, root))

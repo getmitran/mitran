@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 const MaxVersions = 50
@@ -227,18 +228,18 @@ func (s *Store) handleArtifacts(w http.ResponseWriter, r *http.Request) {
 			Tags    []string `json:"tags"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		a, err := s.Save(req.Name, req.Kind, req.Content, req.Tags)
 		if err != nil {
-			http.Error(w, err.Error(), 409)
+			apierr.WriteError(w, apierr.Conflict(err.Error()))
 			return
 		}
 		w.WriteHeader(201)
 		json.NewEncoder(w).Encode(a)
 	default:
-		http.Error(w, "method not allowed", 405)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 	}
 }
 
@@ -250,7 +251,7 @@ func (s *Store) handleArtifactBySlug(w http.ResponseWriter, r *http.Request) {
 	if len(parts) == 2 && parts[1] == "versions" {
 		vers, err := s.Versions(slug)
 		if err != nil {
-			http.Error(w, err.Error(), 404)
+			apierr.WriteError(w, apierr.NotFound(err.Error()))
 			return
 		}
 		json.NewEncoder(w).Encode(vers)
@@ -261,7 +262,7 @@ func (s *Store) handleArtifactBySlug(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		a, err := s.Get(slug)
 		if err != nil {
-			http.Error(w, err.Error(), 404)
+			apierr.WriteError(w, apierr.NotFound(err.Error()))
 			return
 		}
 		json.NewEncoder(w).Encode(a)
@@ -270,22 +271,22 @@ func (s *Store) handleArtifactBySlug(w http.ResponseWriter, r *http.Request) {
 			Content string `json:"content"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		a, err := s.Update(slug, req.Content)
 		if err != nil {
-			http.Error(w, err.Error(), 404)
+			apierr.WriteError(w, apierr.NotFound(err.Error()))
 			return
 		}
 		json.NewEncoder(w).Encode(a)
 	case http.MethodDelete:
 		if err := s.Delete(slug); err != nil {
-			http.Error(w, err.Error(), 404)
+			apierr.WriteError(w, apierr.NotFound(err.Error()))
 			return
 		}
 		w.WriteHeader(204)
 	default:
-		http.Error(w, "method not allowed", 405)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 	}
 }

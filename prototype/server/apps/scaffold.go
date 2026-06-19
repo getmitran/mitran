@@ -7,12 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func HandleScaffold(appsDir string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 			return
 		}
 
@@ -27,18 +28,18 @@ func HandleScaffold(appsDir string) http.HandlerFunc {
 		}
 		name = strings.TrimSpace(name)
 		if name == "" {
-			http.Error(w, `{"error":"name is required"}`, http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("name is required"))
 			return
 		}
 
 		dir := filepath.Join(appsDir, name)
 		if _, err := os.Stat(dir); err == nil {
-			http.Error(w, `{"error":"app already exists"}`, http.StatusConflict)
+			apierr.WriteError(w, apierr.Conflict("app already exists"))
 			return
 		}
 
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err), http.StatusInternalServerError)
+			apierr.WriteError(w, apierr.Internal(err.Error()))
 			return
 		}
 
@@ -52,7 +53,7 @@ func HandleScaffold(appsDir string) http.HandlerFunc {
 
 		for fname, content := range files {
 			if err := os.WriteFile(filepath.Join(dir, fname), []byte(content), 0644); err != nil {
-				http.Error(w, fmt.Sprintf(`{"error":"writing %s: %s"}`, fname, err), http.StatusInternalServerError)
+				apierr.WriteError(w, apierr.Internal("writing file: "+err.Error()))
 				return
 			}
 		}

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type apiKeyWindow struct {
@@ -39,7 +40,7 @@ func RateLimitByAPIKey(next http.Handler) http.Handler {
 
 		if exceeded {
 			w.Header().Set("Retry-After", fmt.Sprintf("%d", int(remaining.Seconds())+1))
-			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+			apierr.WriteError(w, apierr.Internal("rate limit exceeded"))
 			return
 		}
 

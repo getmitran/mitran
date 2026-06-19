@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type BatchRequest struct {
@@ -22,11 +23,11 @@ func BatchHandler(mux http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requests []BatchRequest
 		if err := json.NewDecoder(r.Body).Decode(&requests); err != nil {
-			http.Error(w, "invalid batch request", 400)
+			apierr.WriteError(w, apierr.BadRequest("invalid batch request"))
 			return
 		}
 		if len(requests) > 20 {
-			http.Error(w, "max 20 requests per batch", 400)
+			apierr.WriteError(w, apierr.BadRequest("max 20 requests per batch"))
 			return
 		}
 		responses := make([]BatchResponse, len(requests))

@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func RegisterRoutes(mux *http.ServeMux, bus *Bus) {
 	mux.HandleFunc("/api/v1/events", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 			return
 		}
 		limit := 50
@@ -26,7 +27,7 @@ func RegisterRoutes(mux *http.ServeMux, bus *Bus) {
 	mux.HandleFunc("/api/v1/events/stream", func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "streaming not supported", http.StatusInternalServerError)
+			apierr.WriteError(w, apierr.Internal("streaming not supported"))
 			return
 		}
 		w.Header().Set("Content-Type", "text/event-stream")

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type CreateJobRequest struct {
@@ -21,7 +22,7 @@ func RegisterRoutes(mux *http.ServeMux, scheduler *Scheduler) {
 		case http.MethodPost:
 			createJob(w, r, scheduler)
 		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		}
 	})
 
@@ -29,7 +30,7 @@ func RegisterRoutes(mux *http.ServeMux, scheduler *Scheduler) {
 		path := strings.TrimPrefix(r.URL.Path, "/api/v1/cron/")
 		parts := strings.Split(path, "/")
 		if len(parts) == 0 || parts[0] == "" {
-			http.Error(w, "missing job id", http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("missing job id"))
 			return
 		}
 		id := parts[0]
@@ -52,7 +53,7 @@ func RegisterRoutes(mux *http.ServeMux, scheduler *Scheduler) {
 			scheduler.Trigger(id)
 			writeJSON(w, map[string]string{"status": "triggered"})
 		default:
-			http.Error(w, "not found", http.StatusNotFound)
+			apierr.WriteError(w, apierr.NotFound("not found"))
 		}
 	})
 }
@@ -64,11 +65,11 @@ func listJobs(w http.ResponseWriter, s *Scheduler) {
 func createJob(w http.ResponseWriter, r *http.Request, s *Scheduler) {
 	var req CreateJobRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid json"))
 		return
 	}
 	if req.Name == "" || req.Schedule == "" {
-		http.Error(w, "name and schedule required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("name and schedule required"))
 		return
 	}
 	job := s.Add(req.Name, req.Agent, req.Schedule, req.Payload)

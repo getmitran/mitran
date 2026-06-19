@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type ReviewCycle struct {
@@ -80,7 +81,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, store *ReviewStore) {
 	mux.HandleFunc("POST /api/v1/hr/reviews", func(w http.ResponseWriter, r *http.Request) {
 		var rev Review
 		if err := json.NewDecoder(r.Body).Decode(&rev); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 			return
 		}
 		json.NewEncoder(w).Encode(store.SubmitSelfReview(rev))
@@ -91,7 +92,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, store *ReviewStore) {
 		if rev := store.SubmitManagerReview(r.PathValue("id"), req.ManagerRating, req.ManagerComments); rev != nil {
 			json.NewEncoder(w).Encode(rev)
 		} else {
-			http.Error(w, "not found", 404)
+			apierr.WriteError(w, apierr.NotFound("not found"))
 		}
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
@@ -15,7 +16,7 @@ func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
 		name := r.PathValue("name")
 		app, ok := installer.Get(name)
 		if !ok {
-			http.Error(w, "not found", 404)
+			apierr.WriteError(w, apierr.NotFound("not found"))
 			return
 		}
 		json.NewEncoder(w).Encode(app)
@@ -27,12 +28,12 @@ func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
 		}
 		json.NewDecoder(r.Body).Decode(&body)
 		if body.Path == "" {
-			http.Error(w, "path required", 400)
+			apierr.WriteError(w, apierr.BadRequest("path required"))
 			return
 		}
 		app, err := installer.Install(body.Path)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		w.WriteHeader(201)
@@ -46,7 +47,7 @@ func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
 			workspace = "default"
 		}
 		if err := installer.Enable(name, workspace); err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		w.WriteHeader(200)
@@ -59,7 +60,7 @@ func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
 			workspace = "default"
 		}
 		if err := installer.Disable(name, workspace); err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		w.WriteHeader(200)
@@ -67,7 +68,7 @@ func RegisterRoutes(mux *http.ServeMux, installer *Installer, appsDir string) {
 
 	mux.HandleFunc("DELETE /api/v1/apps/{name}", func(w http.ResponseWriter, r *http.Request) {
 		if err := installer.Uninstall(r.PathValue("name")); err != nil {
-			http.Error(w, err.Error(), 400)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		w.WriteHeader(204)

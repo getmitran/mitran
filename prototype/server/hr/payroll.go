@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type SalaryStructure struct {
@@ -80,7 +81,7 @@ func (s *PayrollStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/hr/payroll/salary", func(w http.ResponseWriter, r *http.Request) {
 		var st SalaryStructure
 		if err := json.NewDecoder(r.Body).Decode(&st); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 			return
 		}
 		s.SetSalary(st.EmployeeID, st)
@@ -92,7 +93,7 @@ func (s *PayrollStore) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/hr/payroll/{empId}/generate", func(w http.ResponseWriter, r *http.Request) {
 		p := s.GeneratePayslip(r.PathValue("empId"), r.URL.Query().Get("month"))
 		if p == nil {
-			http.Error(w, "salary not configured", 404)
+			apierr.WriteError(w, apierr.NotFound("salary not configured"))
 			return
 		}
 		json.NewEncoder(w).Encode(p)

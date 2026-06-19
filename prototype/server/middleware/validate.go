@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 const maxBodySize = 1 << 20 // 1MB
@@ -14,7 +15,7 @@ func ValidateJSON(next http.Handler) http.Handler {
 		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
 			ct := r.Header.Get("Content-Type")
 			if !strings.HasPrefix(ct, "application/json") {
-				http.Error(w, `{"error":"Content-Type must be application/json"}`, http.StatusUnsupportedMediaType)
+				apierr.WriteError(w, apierr.BadRequest("Content-Type must be application/json"))
 				return
 			}
 			r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
@@ -28,7 +29,7 @@ func ValidateRequired(fields ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var body map[string]interface{}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-				http.Error(w, `{"error":"invalid JSON body"}`, http.StatusBadRequest)
+				apierr.WriteError(w, apierr.BadRequest("invalid JSON body"))
 				return
 			}
 
@@ -46,7 +47,7 @@ func ValidateRequired(fields ...string) func(http.Handler) http.Handler {
 
 			if len(missing) > 0 {
 				msg := fmt.Sprintf(`{"error":"missing required fields","fields":["%s"]}`, strings.Join(missing, `","`))
-				http.Error(w, msg, http.StatusBadRequest)
+				apierr.WriteError(w, apierr.BadRequest(msg))
 				return
 			}
 

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type WorkerState string
@@ -206,7 +207,7 @@ func (m *Manager) RegisterRoutes(mux *http.ServeMux) {
 
 func (m *Manager) handleList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -215,7 +216,7 @@ func (m *Manager) handleList(w http.ResponseWriter, r *http.Request) {
 
 func (m *Manager) handleRestart(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	m.RestartAll()

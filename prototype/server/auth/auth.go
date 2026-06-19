@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 var jwtSecret = []byte(os.Getenv("MITRAN_JWT_SECRET"))
@@ -86,14 +87,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		auth := r.Header.Get("Authorization")
 		if auth == "" {
-			http.Error(w, "unauthorized", 401)
+			apierr.WriteError(w, apierr.Unauthorized("unauthorized"))
 			return
 		}
 
 		token := strings.TrimPrefix(auth, "Bearer ")
 		claims, err := ValidateToken(token)
 		if err != nil {
-			http.Error(w, err.Error(), 401)
+			apierr.WriteError(w, apierr.Unauthorized(err.Error()))
 			return
 		}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type SlackCommandResponse struct {
@@ -35,7 +36,7 @@ func (h *SlackCommandHandler) RegisterRoutes(mux *http.ServeMux) {
 
 func (h *SlackCommandHandler) HandleSlashCommand(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 

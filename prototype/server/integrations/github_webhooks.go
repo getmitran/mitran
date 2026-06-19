@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type GitHubWebhookHandler struct {
@@ -30,13 +31,13 @@ func (h *GitHubWebhookHandler) RegisterRoutes(mux *http.ServeMux) {
 
 func (h *GitHubWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to read body", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("failed to read body"))
 		return
 	}
 	defer r.Body.Close()
@@ -44,20 +45,20 @@ func (h *GitHubWebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Requ
 	if h.secret != "" {
 		sig := r.Header.Get("X-Hub-Signature-256")
 		if !h.verifySignature(body, sig) {
-			http.Error(w, "invalid signature", http.StatusUnauthorized)
+			apierr.WriteError(w, apierr.Unauthorized("invalid signature"))
 			return
 		}
 	}
 
 	var payload map[string]interface{}
 	if err := json.Unmarshal(body, &payload); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid JSON"))
 		return
 	}
 
 	event := r.Header.Get("X-GitHub-Event")
 	if err := h.routeEvent(event, payload); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		apierr.WriteError(w, apierr.Internal(err.Error()))
 		return
 	}
 

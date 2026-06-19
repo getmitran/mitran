@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type ApprovalMode string
@@ -139,7 +140,7 @@ func (s *ToolApprovalService) handlePending(w http.ResponseWriter, r *http.Reque
 func (s *ToolApprovalService) handleApprove(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.Approve(id); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound(err.Error()))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -148,7 +149,7 @@ func (s *ToolApprovalService) handleApprove(w http.ResponseWriter, r *http.Reque
 func (s *ToolApprovalService) handleReject(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if err := s.Reject(id); err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound(err.Error()))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -160,7 +161,7 @@ func (s *ToolApprovalService) handleConfig(w http.ResponseWriter, r *http.Reques
 		Mode ApprovalMode `json:"mode"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid body"))
 		return
 	}
 	switch body.Mode {
@@ -168,6 +169,6 @@ func (s *ToolApprovalService) handleConfig(w http.ResponseWriter, r *http.Reques
 		s.SetAgentMode(agent, body.Mode)
 		w.WriteHeader(http.StatusOK)
 	default:
-		http.Error(w, "invalid mode: use interactive, reads, or yolo", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid mode: use interactive, reads, or yolo"))
 	}
 }

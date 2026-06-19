@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func RegisterRoutes(mux *http.ServeMux, mgr *Manager) {
@@ -15,7 +16,7 @@ func RegisterRoutes(mux *http.ServeMux, mgr *Manager) {
 		case http.MethodGet:
 			handleList(w, r, mgr)
 		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		}
 	})
 	mux.HandleFunc("/api/v1/sessions/", func(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +35,7 @@ func RegisterRoutes(mux *http.ServeMux, mgr *Manager) {
 			case http.MethodDelete:
 				handleEnd(w, r, mgr, id)
 			default:
-				http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+				apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 			}
 			return
 		}
@@ -48,7 +49,7 @@ func handleCreate(w http.ResponseWriter, r *http.Request, mgr *Manager) {
 		Agent  string `json:"agent"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	s := mgr.Create(req.UserID, req.Agent)
@@ -67,7 +68,7 @@ func handleList(w http.ResponseWriter, r *http.Request, mgr *Manager) {
 func handleGet(w http.ResponseWriter, _ *http.Request, mgr *Manager, id string) {
 	s := mgr.Get(id)
 	if s == nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("not found"))
 		return
 	}
 	writeJSON(w, http.StatusOK, s)
@@ -76,12 +77,12 @@ func handleGet(w http.ResponseWriter, _ *http.Request, mgr *Manager, id string) 
 func handleAddMessage(w http.ResponseWriter, r *http.Request, mgr *Manager, sessionID string) {
 	s := mgr.Get(sessionID)
 	if s == nil {
-		http.Error(w, "session not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("session not found"))
 		return
 	}
 	var msg Message
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	if msg.ID == "" {
@@ -97,7 +98,7 @@ func handleAddMessage(w http.ResponseWriter, r *http.Request, mgr *Manager, sess
 func handleEnd(w http.ResponseWriter, _ *http.Request, mgr *Manager, id string) {
 	s := mgr.Get(id)
 	if s == nil {
-		http.Error(w, "not found", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("not found"))
 		return
 	}
 	mgr.End(id)

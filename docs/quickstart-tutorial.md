@@ -14,6 +14,9 @@ docker compose up -d
 
 Open http://localhost:5173 for the dashboard UI.
 
+
+> **Ports:** Dashboard UI → `localhost:5173` | API Server → `localhost:7780`
+
 Wait ~10 seconds for all services to initialize.
 
 ## 2. Verify Health

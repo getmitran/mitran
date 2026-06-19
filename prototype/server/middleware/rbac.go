@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/getmitran/mitran/server/auth"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type Role string
@@ -69,20 +70,20 @@ func RBACMiddleware(config RBACConfig) func(http.Handler) http.Handler {
 				user = r.Header.Get("X-User")
 			}
 			if user == "" {
-				http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+				apierr.WriteError(w, apierr.Unauthorized("unauthorized"))
 				return
 			}
 			role, ok := config.Users[user]
 			if !ok {
-				http.Error(w, `{"error":"user not found"}`, http.StatusForbidden)
+				apierr.WriteError(w, apierr.Forbidden("user not found"))
 				return
 			}
 			if r.Method != http.MethodGet && !CanWrite(role) {
-				http.Error(w, `{"error":"permission denied"}`, http.StatusForbidden)
+				apierr.WriteError(w, apierr.Forbidden("permission denied"))
 				return
 			}
 			if isAdminRoute(r.URL.Path) && !CanAdmin(role) {
-				http.Error(w, `{"error":"admin access required"}`, http.StatusForbidden)
+				apierr.WriteError(w, apierr.Forbidden("admin access required"))
 				return
 			}
 			next.ServeHTTP(w, r)

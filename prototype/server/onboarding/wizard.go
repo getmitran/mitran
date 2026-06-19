@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"sync"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type OnboardingState struct {
@@ -28,14 +29,14 @@ func (h *OnboardingHandler) RegisterRoutes(mux *http.ServeMux) {
 
 func (h *OnboardingHandler) Start(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	var req struct {
 		TenantID string `json:"tenant_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TenantID == "" {
-		http.Error(w, "tenant_id required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("tenant_id required"))
 		return
 	}
 	state := &OnboardingState{
@@ -53,7 +54,7 @@ func (h *OnboardingHandler) Start(w http.ResponseWriter, r *http.Request) {
 
 func (h *OnboardingHandler) Step(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	var req struct {
@@ -62,14 +63,14 @@ func (h *OnboardingHandler) Step(w http.ResponseWriter, r *http.Request) {
 		Config    map[string]string `json:"config"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TenantID == "" {
-		http.Error(w, "tenant_id required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("tenant_id required"))
 		return
 	}
 	storeMu.Lock()
 	state, ok := store[req.TenantID]
 	if !ok {
 		storeMu.Unlock()
-		http.Error(w, "onboarding not started", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("onboarding not started"))
 		return
 	}
 	state.Step++
@@ -86,19 +87,19 @@ func (h *OnboardingHandler) Step(w http.ResponseWriter, r *http.Request) {
 
 func (h *OnboardingHandler) Status(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	tenantID := r.URL.Query().Get("tenant_id")
 	if tenantID == "" {
-		http.Error(w, "tenant_id required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("tenant_id required"))
 		return
 	}
 	storeMu.RLock()
 	state, ok := store[tenantID]
 	storeMu.RUnlock()
 	if !ok {
-		http.Error(w, "onboarding not started", http.StatusNotFound)
+		apierr.WriteError(w, apierr.NotFound("onboarding not started"))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type Bucket struct {
@@ -70,7 +71,7 @@ func RateLimitMiddleware(rps float64, burst int) func(http.Handler) http.Handler
 			}
 			if !rl.Allow(key) {
 				w.Header().Set("Retry-After", "1")
-				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				apierr.WriteError(w, apierr.Internal("rate limit exceeded"))
 				return
 			}
 			next.ServeHTTP(w, r)

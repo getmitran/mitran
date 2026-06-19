@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type OffboardTask struct {
@@ -85,14 +86,14 @@ func RegisterOffboardingRoutes(mux *http.ServeMux) {
 		f := store.offboardings[r.PathValue("id")]
 		store.mu.RUnlock()
 		if f == nil {
-			http.Error(w, "not found", 404)
+			apierr.WriteError(w, apierr.NotFound("not found"))
 			return
 		}
 		json.NewEncoder(w).Encode(f)
 	})
 	mux.HandleFunc("PUT /api/v1/hr/offboarding/{id}/tasks/{taskId}", func(w http.ResponseWriter, r *http.Request) {
 		if err := store.CompleteOffboardTask(r.PathValue("id"), r.PathValue("taskId")); err != nil {
-			http.Error(w, err.Error(), 404)
+			apierr.WriteError(w, apierr.NotFound(err.Error()))
 			return
 		}
 		w.WriteHeader(200)

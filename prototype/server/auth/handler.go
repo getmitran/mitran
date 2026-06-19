@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type User struct {
@@ -59,7 +60,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", 400)
+		apierr.WriteError(w, apierr.BadRequest("invalid body"))
 		return
 	}
 
@@ -68,13 +69,13 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 	store.mu.RUnlock()
 
 	if !ok || user.PassHash != hashPassword(req.Password) {
-		http.Error(w, "invalid credentials", 401)
+		apierr.WriteError(w, apierr.Unauthorized("invalid credentials"))
 		return
 	}
 
 	token, err := GenerateToken(user.ID, user.Role, 24*time.Hour)
 	if err != nil {
-		http.Error(w, "token generation failed", 500)
+		apierr.WriteError(w, apierr.Internal("token generation failed"))
 		return
 	}
 
@@ -88,7 +89,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 func handleGenerateAPIKey(w http.ResponseWriter, r *http.Request) {
 	role := Role(r.Header.Get("X-User-Role"))
 	if role != RoleAdmin {
-		http.Error(w, "admin only", 403)
+		apierr.WriteError(w, apierr.Forbidden("admin only"))
 		return
 	}
 
@@ -97,7 +98,7 @@ func handleGenerateAPIKey(w http.ResponseWriter, r *http.Request) {
 		Role Role   `json:"role"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", 400)
+		apierr.WriteError(w, apierr.BadRequest("invalid body"))
 		return
 	}
 
@@ -117,7 +118,7 @@ func handleMe(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("X-User-ID")
 	role := r.Header.Get("X-User-Role")
 	if userID == "" {
-		http.Error(w, "not authenticated", 401)
+		apierr.WriteError(w, apierr.Unauthorized("not authenticated"))
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{
@@ -129,7 +130,7 @@ func handleMe(w http.ResponseWriter, r *http.Request) {
 func handleRegister(w http.ResponseWriter, r *http.Request) {
 	callerRole := Role(r.Header.Get("X-User-Role"))
 	if callerRole != RoleAdmin {
-		http.Error(w, "admin only", 403)
+		apierr.WriteError(w, apierr.Forbidden("admin only"))
 		return
 	}
 
@@ -139,18 +140,18 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 		Role     Role   `json:"role"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid body", 400)
+		apierr.WriteError(w, apierr.BadRequest("invalid body"))
 		return
 	}
 	if req.Username == "" || req.Password == "" {
-		http.Error(w, "username and password required", 400)
+		apierr.WriteError(w, apierr.BadRequest("username and password required"))
 		return
 	}
 
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	if _, exists := store.users[req.Username]; exists {
-		http.Error(w, "user already exists", 409)
+		apierr.WriteError(w, apierr.Conflict("user already exists"))
 		return
 	}
 

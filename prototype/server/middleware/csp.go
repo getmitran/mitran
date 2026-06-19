@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type cspContextKey string
@@ -16,7 +17,7 @@ func CSP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b := make([]byte, 16)
 		if _, err := rand.Read(b); err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			apierr.WriteError(w, apierr.Internal("internal error"))
 			return
 		}
 		nonce := base64.StdEncoding.EncodeToString(b)

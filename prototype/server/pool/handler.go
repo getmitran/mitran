@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func RegisterHandlers(mux *http.ServeMux, p *Pool) {
@@ -42,7 +43,7 @@ func handleSubmit(p *Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req submitReq
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest(err.Error()))
 			return
 		}
 		if req.ID == "" {

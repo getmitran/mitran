@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type Employee struct {
@@ -87,7 +88,7 @@ func (d *Directory) Handler(w http.ResponseWriter, r *http.Request) {
 	case r.Method == "POST":
 		var e Employee
 		if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
-			http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+			apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 			return
 		}
 		d.Add(e)

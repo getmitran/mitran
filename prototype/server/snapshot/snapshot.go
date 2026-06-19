@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type Component string
@@ -210,13 +211,13 @@ func addDirToTar(tw *tar.Writer, srcDir, prefix string) error {
 
 func HandleCreateSnapshot(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	snapshotDir := filepath.Join(dataDir, ".snapshots")
 	meta, err := CreateSnapshot(snapshotDir)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		apierr.WriteError(w, apierr.Internal(err.Error()))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -225,23 +226,23 @@ func HandleCreateSnapshot(w http.ResponseWriter, r *http.Request) {
 
 func HandleRestore(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	var req RestoreRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("invalid request body"))
 		return
 	}
 	if req.Path == "" {
-		http.Error(w, "path required", http.StatusBadRequest)
+		apierr.WriteError(w, apierr.BadRequest("path required"))
 		return
 	}
 	if len(req.Components) == 0 {
 		req.Components = AllComponents
 	}
 	if err := RestoreSnapshot(req.Path, req.Components); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		apierr.WriteError(w, apierr.Internal(err.Error()))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -250,13 +251,13 @@ func HandleRestore(w http.ResponseWriter, r *http.Request) {
 
 func HandleListSnapshots(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		apierr.WriteError(w, apierr.MethodNotAllowed("method not allowed"))
 		return
 	}
 	snapshotDir := filepath.Join(dataDir, ".snapshots")
 	list, err := ListSnapshots(snapshotDir)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		apierr.WriteError(w, apierr.Internal(err.Error()))
 		return
 	}
 	if list == nil {

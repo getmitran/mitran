@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 func RecoverMiddleware(next http.Handler) http.Handler {
@@ -11,7 +12,7 @@ func RecoverMiddleware(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Printf("panic: %v\n%s", err, debug.Stack())
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				apierr.WriteError(w, apierr.Internal("Internal Server Error"))
 			}
 		}()
 		next.ServeHTTP(w, r)

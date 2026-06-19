@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type SSOConfig struct{ Issuer, ClientID, ClientSecret, RedirectURL string }
@@ -49,12 +50,12 @@ func HandleSSOLogin(w http.ResponseWriter, r *http.Request) {
 	cfg := LoadSSOConfig()
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
-		http.Error(w, "entropy failure", http.StatusInternalServerError); return
+		apierr.WriteError(w, apierr.Internal("entropy failure")); return
 	}
 	state := hex.EncodeToString(b)
 	nb := make([]byte, 16)
 	if _, err := rand.Read(nb); err != nil {
-		http.Error(w, "entropy failure", http.StatusInternalServerError); return
+		apierr.WriteError(w, apierr.Internal("entropy failure")); return
 	}
 	nonce := hex.EncodeToString(nb)
 	statesMu.Lock(); cleanExpiredStates(); ssoStates[state] = time.Now().Add(10 * time.Minute); ssoNonces[nonce] = time.Now().Add(10 * time.Minute); statesMu.Unlock()
@@ -70,32 +71,32 @@ func HandleSSOCallback(w http.ResponseWriter, r *http.Request) {
 	exp, ok := ssoStates[state]
 	if ok { delete(ssoStates, state) }
 	statesMu.Unlock()
-	if !ok || time.Now().After(exp) { http.Error(w, "invalid state", http.StatusBadRequest); return }
+	if !ok || time.Now().After(exp) { apierr.WriteError(w, apierr.BadRequest("invalid state")); return }
 	resp, err := http.PostForm(strings.TrimRight(cfg.Issuer, "/")+"/token", url.Values{
 		"grant_type": {"authorization_code"}, "code": {r.URL.Query().Get("code")},
 		"redirect_uri": {cfg.RedirectURL}, "client_id": {cfg.ClientID}, "client_secret": {cfg.ClientSecret},
 	})
-	if err != nil { http.Error(w, "token exchange failed", http.StatusBadGateway); return }
+	if err != nil { apierr.WriteError(w, apierr.Internal("token exchange failed")); return }
 	defer resp.Body.Close()
 	var tok struct{ IDToken string `json:"id_token"` }
 	json.NewDecoder(resp.Body).Decode(&tok)
 	parts := strings.Split(tok.IDToken, ".")
-	if len(parts) != 3 { http.Error(w, "invalid id_token", http.StatusBadGateway); return }
+	if len(parts) != 3 { apierr.WriteError(w, apierr.Internal("invalid id_token")); return }
 	// Verify JWT signature via JWKS
-	if _, err := VerifyJWT(tok.IDToken, cfg.Issuer); err != nil { http.Error(w, "JWT signature verification failed", http.StatusUnauthorized); return }
+	if _, err := VerifyJWT(tok.IDToken, cfg.Issuer); err != nil { apierr.WriteError(w, apierr.Unauthorized("JWT signature verification failed")); return }
 	seg := strings.ReplaceAll(strings.ReplaceAll(parts[1], "-", "+"), "_", "/")
 	for len(seg)%4 != 0 { seg += "=" }
 	payload, _ := base64.StdEncoding.DecodeString(seg)
 	var claims struct{ Iss, Sub, Email, Aud, Nonce string; Exp int64 }
 	json.Unmarshal(payload, &claims)
 	if claims.Iss != cfg.Issuer || claims.Aud != cfg.ClientID || time.Now().Unix() > claims.Exp {
-		http.Error(w, "token validation failed", http.StatusUnauthorized); return
+		apierr.WriteError(w, apierr.Unauthorized("token validation failed")); return
 	}
 	statesMu.Lock()
 	nExp, nOk := ssoNonces[claims.Nonce]
 	if nOk { delete(ssoNonces, claims.Nonce) }
 	statesMu.Unlock()
-	if !nOk || time.Now().After(nExp) { http.Error(w, "invalid nonce", http.StatusUnauthorized); return }
+	if !nOk || time.Now().After(nExp) { apierr.WriteError(w, apierr.Unauthorized("invalid nonce")); return }
 	http.SetCookie(w, &http.Cookie{Name: "session", Value: makeSessionToken(claims.Email), Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
 	http.Redirect(w, r, "/dashboard", http.StatusFound)
 }

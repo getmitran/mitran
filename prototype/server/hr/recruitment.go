@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"github.com/getmitran/mitran/server/apierr"
 )
 
 type JobPosting struct {
@@ -109,7 +110,7 @@ func RegisterRecruitmentRoutes(mux *http.ServeMux, s *RecruitmentStore) {
 		var body struct{ Stage string }
 		json.NewDecoder(r.Body).Decode(&body)
 		if !s.MoveStage(r.PathValue("id"), body.Stage) {
-			http.Error(w, "not found", 404)
+			apierr.WriteError(w, apierr.NotFound("not found"))
 			return
 		}
 		w.Write([]byte(`{"ok":true}`))
