@@ -4,7 +4,7 @@ class HelloAgent:
     BASE = "http://localhost:7780/api/v1/tasks"
 
     def run(self, description="Hello from example agent!"):
-        resp = requests.post(self.BASE, json={"description": description})
+        resp = requests.post(self.BASE, json={"title": description, "agent": "hello", "priority": "medium"})
         resp.raise_for_status()
         task_id = resp.json()["id"]
         print(f"Created task {task_id}, polling...")

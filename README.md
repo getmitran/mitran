@@ -95,9 +95,9 @@ cp .env.example .env  # Add your LLM API keys
 docker compose up
 ```
 
-Dashboard: http://localhost:3000 · API: http://localhost:7780 · Agents: http://localhost:8888
+Dashboard: http://localhost:5173 · API: http://localhost:7780 · Agents: http://localhost:8888
 
-> Dev: http://localhost:5173 | Docker: http://localhost:3000
+> Dev: http://localhost:5173 | Docker: http://localhost:5173
 
 ## Manual Setup
 
