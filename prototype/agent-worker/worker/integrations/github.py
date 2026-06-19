@@ -95,3 +95,14 @@ def trigger_workflow(owner: str, repo: str, workflow_id: str) -> dict:
     return _request("POST", f"/repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches", json={
         "ref": "main",
     })
+
+
+def get_workflow_runs(owner: str, repo: str, workflow_id: Optional[str] = None, status: Optional[str] = None) -> list:
+    path = f"/repos/{owner}/{repo}/actions/runs"
+    if workflow_id:
+        path = f"/repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs"
+    params = {"per_page": 20}
+    if status:
+        params["status"] = status
+    data = _request("GET", path, params=params)
+    return data.get("workflow_runs", [])

@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/getmitran/mitran/server/auth"
 	"github.com/getmitran/mitran/server/db"
-	"github.com/getmitran/mitran/server/logging"
+	"github.com/getmitran/mitran/server/dispatcher"
+	"github.com/getmitran/mitran/server/logger"
 	"github.com/getmitran/mitran/server/handlers"
 	"github.com/getmitran/mitran/server/memory"
 	"github.com/getmitran/mitran/server/middleware"
@@ -23,7 +28,7 @@ import (
 )
 
 func main() {
-	logger := logging.New()
+	logger.Init("info")
 
 	// Data directory
 	dataDir := filepath.Join(".", ".mitran")
@@ -47,6 +52,9 @@ func main() {
 
 	// Handlers
 	mux := http.NewServeMux()
+
+	// Auth routes (public — login, register, token)
+	auth.RegisterRoutes(mux)
 
 	// WebSocket hub for real-time events
 	hub := websocket.NewHub()
@@ -131,6 +139,11 @@ func main() {
 		w.Write([]byte(`{"name":"mitran","version":"0.1.0","endpoints":["/health","/api/v1/init","/api/v1/tasks","/api/v1/agents","/api/v1/checkpoints","/api/v1/projects","/api/v1/settings"],"dashboard":"http://localhost:5173"}`))
 	})
 
+	// Start task dispatcher
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+	go dispatcher.Start(ctx, store)
+
 	// Start scheduler
 	sched := &scheduler.Scheduler{Store: store, WorkspaceDir: cfg.ProjectsDir}
 	sched.Start()
@@ -140,7 +153,7 @@ func main() {
 		port = p
 	}
 
-	handler := middleware.CORS(middleware.SecurityHeaders(middleware.CSP(middleware.RateLimitMiddleware(100, 200)(middleware.RequestLogger(mux)))))
+	handler := middleware.CORS(middleware.SecurityHeaders(middleware.CSP(middleware.RateLimitMiddleware(100, 200)(middleware.RequestLogger(auth.AuthMiddleware(mux))))))
 	logger.Info("server starting", "port", port, "data_dir", dataDir)
 	fmt.Printf("\n  ╔══════════════════════════════════════════╗\n")
 	fmt.Printf("  ║   Mitran Core Engine v0.1.0              ║\n")

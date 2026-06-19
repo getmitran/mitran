@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2 } from 'lucide-react'
-import { api } from '../api'
+
+const API = 'http://localhost:7780/api/v1'
 
 interface Message {
   id: string
@@ -21,23 +22,45 @@ export default function ChatInterface() {
 
   async function send() {
     if (!input.trim() || loading) return
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: new Date().toISOString() }
+    const msg = input.trim()
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: msg, timestamp: new Date().toISOString() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
 
     try {
-      const res = await api.chat(input, agent)
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: res.response || res.summary || 'No response',
-        agent,
-        timestamp: new Date().toISOString(),
+      const res = await fetch(`${API}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: msg, agent, priority: 'high' }),
+      })
+      if (!res.ok) throw new Error(`POST failed: ${res.status}`)
+      const task = await res.json()
+      const taskId = task.id
+
+      // Poll until completed or failed
+      let result = task
+      for (let i = 0; i < 30; i++) {
+        if (result.status === 'completed' || result.status === 'failed') break
+        await new Promise(r => setTimeout(r, 2000))
+        const poll = await fetch(`${API}/tasks/${taskId}`)
+        if (!poll.ok) throw new Error(`Poll failed: ${poll.status}`)
+        result = await poll.json()
       }
-      setMessages(prev => [...prev, assistantMsg])
+
+      const content = result.status === 'completed'
+        ? (result.result || result.output || result.summary || 'Task completed.')
+        : result.status === 'failed'
+        ? `Failed: ${result.error || 'Unknown error'}`
+        : 'Task timed out (still processing).'
+
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(), role: 'assistant', content, agent, timestamp: new Date().toISOString(),
+      }])
     } catch (e: any) {
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: `Error: ${e.message}`, timestamp: new Date().toISOString() }])
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(), role: 'assistant', content: `Error: ${e.message}`, timestamp: new Date().toISOString(),
+      }])
     } finally {
       setLoading(false)
     }
@@ -99,7 +122,7 @@ export default function ChatInterface() {
               <Loader2 size={14} className="text-cyan-400 animate-spin" />
             </div>
             <div className="px-3 py-2 rounded-lg bg-[#141b2d] border border-white/5 text-gray-500 text-sm">
-              Thinking...
+              Processing...
             </div>
           </div>
         )}

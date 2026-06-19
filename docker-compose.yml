@@ -31,10 +31,14 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - WORKER_PORT=8888
-      - ENGINE_URL=http://mitran-engine:7780
+      - MITRAN_WORKER_PORT=8888
+      - MITRAN_ENGINE_URL=http://mitran-engine:7780
       - CHROMADB_URL=http://chromadb:8000
-      - AWS_REGION=us-east-1
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - MITRAN_MODEL_ID=${MITRAN_MODEL_ID:-us.anthropic.claude-sonnet-4-20250514}
     volumes:
       - worker-data:/data
     depends_on:

@@ -76,7 +76,8 @@ func sign(data string) string {
 // AuthMiddleware validates JWT tokens or passes through in dev mode.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" || r.URL.Path == "/" {
+		// Public paths — no auth required
+		if r.URL.Path == "/" || r.URL.Path == "/health" || r.URL.Path == "/healthz" || r.URL.Path == "/readyz" || strings.HasPrefix(r.URL.Path, "/api/v1/auth/") {
 			next.ServeHTTP(w, r)
 			return
 		}
