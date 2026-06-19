@@ -2,15 +2,25 @@ import type { Config } from 'tailwindcss'
 
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
-  darkMode: 'class',
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        accent: '#06b6d4',
-        surface: '#0f1629',
-        base: '#0a0e1a',
-        card: '#141b2d',
-        'card-hover': '#1a2340',
+        accent: 'var(--accent)',
+        surface: 'var(--bg)',
+        base: 'var(--bg)',
+        card: 'var(--card)',
+        'card-hover': 'var(--bg-hover)',
+        border: 'var(--border)',
+      },
+      backgroundColor: {
+        DEFAULT: 'var(--bg)',
+      },
+      textColor: {
+        DEFAULT: 'var(--text)',
+      },
+      borderColor: {
+        DEFAULT: 'var(--border)',
       },
     },
   },
