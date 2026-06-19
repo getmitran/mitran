@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getmitran/mitran/server/apierr"
 	"github.com/getmitran/mitran/server/db"
 	"github.com/getmitran/mitran/server/queue"
 )
@@ -55,12 +56,12 @@ func (h *TaskHandler) list(w http.ResponseWriter, r *http.Request) {
 
 func (h *TaskHandler) create(w http.ResponseWriter, r *http.Request) {
 	if h.Queue != nil && h.Queue.IsFull() {
-		writeErr(w, http.StatusServiceUnavailable, "server busy, try again later")
+		apierr.WriteError(w, &apierr.APIError{Code: 503, Type: "service_unavailable", Message: "server busy, try again later"})
 		return
 	}
 	var req createTaskReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeErr(w, http.StatusBadRequest, err.Error())
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	t := db.Task{
@@ -77,12 +78,12 @@ func (h *TaskHandler) create(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:   time.Now(),
 	}
 	if err := h.Store.AddTask(t); err != nil {
-		writeErr(w, http.StatusInternalServerError, err.Error())
+		apierr.WriteError(w, apierr.Internal(err.Error()))
 		return
 	}
 	if h.Queue != nil {
 		if err := h.Queue.Enqueue(queue.Task{ID: t.ID, Payload: t}); err != nil {
-			writeErr(w, http.StatusServiceUnavailable, "server busy, try again later")
+			apierr.WriteError(w, &apierr.APIError{Code: 503, Type: "service_unavailable", Message: "server busy, try again later"})
 			return
 		}
 	}
@@ -94,14 +95,14 @@ func (h *TaskHandler) updatePriority(w http.ResponseWriter, r *http.Request, id 
 		Priority int `json:"priority"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeErr(w, http.StatusBadRequest, err.Error())
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	err := h.Store.UpdateTask(id, func(t *db.Task) {
 		t.Priority = req.Priority
 	})
 	if err != nil {
-		writeErr(w, http.StatusNotFound, err.Error())
+		apierr.WriteError(w, apierr.NotFound(err.Error()))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
@@ -112,7 +113,7 @@ func (h *TaskHandler) assign(w http.ResponseWriter, r *http.Request, id string) 
 		AgentID string `json:"agent_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeErr(w, http.StatusBadRequest, err.Error())
+		apierr.WriteError(w, apierr.BadRequest(err.Error()))
 		return
 	}
 	err := h.Store.UpdateTask(id, func(t *db.Task) {
@@ -122,7 +123,7 @@ func (h *TaskHandler) assign(w http.ResponseWriter, r *http.Request, id string) 
 		t.StartedAt = &now
 	})
 	if err != nil {
-		writeErr(w, http.StatusNotFound, err.Error())
+		apierr.WriteError(w, apierr.NotFound(err.Error()))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "assigned"})

@@ -1,3 +1,5 @@
+// TaskQueue is the in-memory bounded queue used by the dispatcher.
+// For persistent/durable queuing, see PersistentQueue in persistent.go.
 package queue
 
 import (

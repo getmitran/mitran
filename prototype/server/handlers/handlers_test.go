@@ -1,78 +1,101 @@
-package handlers_test
+package handlers
 
 import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/getmitran/mitran/server/db"
 )
 
-// setupTestRouter creates a minimal mux mirroring the real server routes
-// without importing the db package (which has conflicting type defs).
-func setupTestRouter() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"healthy"}`))
-	})
-	mux.HandleFunc("/api/v1/agents", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[]`))
-	})
-	mux.HandleFunc("/api/v1/tasks", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`[]`))
-	})
-	return mux
+func testStore(t *testing.T) *db.Store {
+	t.Helper()
+	s, err := db.NewStore(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s
 }
 
-func TestHealthEndpoint(t *testing.T) {
-	mux := setupTestRouter()
-	req := httptest.NewRequest("GET", "/api/v1/health", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, req)
+func TestHealthz(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(Healthz))
+	defer srv.Close()
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+	resp, err := http.Get(srv.URL)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if ct := w.Header().Get("Content-Type"); ct != "application/json" {
-		t.Fatalf("expected application/json, got %s", ct)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
-	var body map[string]interface{}
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("invalid JSON: %v", err)
+	var body map[string]string
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatal(err)
 	}
-	if body["status"] != "healthy" {
-		t.Fatalf("expected status healthy, got %v", body["status"])
+	if body["status"] != "ok" {
+		t.Fatalf("expected status ok, got %q", body["status"])
 	}
 }
 
-func TestAgentsListEndpoint(t *testing.T) {
-	mux := setupTestRouter()
-	req := httptest.NewRequest("GET", "/api/v1/agents", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, req)
+func TestAgentsList(t *testing.T) {
+	store := testStore(t)
+	handler := &AgentHandler{Store: store}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/api/v1/agents"
+		handler.ServeHTTP(w, r)
+	}))
+	defer srv.Close()
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+	resp, err := http.Get(srv.URL)
+	if err != nil {
+		t.Fatal(err)
 	}
-	var body []interface{}
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("expected JSON array: %v", err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Fatalf("expected 200, got %d", resp.StatusCode)
+	}
+	var agents []interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&agents); err != nil {
+		t.Fatal(err)
+	}
+	if agents == nil {
+		t.Fatal("expected JSON array, got nil")
 	}
 }
 
-func TestTasksListEndpoint(t *testing.T) {
-	mux := setupTestRouter()
-	req := httptest.NewRequest("GET", "/api/v1/tasks", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, req)
+func TestCreateTask(t *testing.T) {
+	store := testStore(t)
+	handler := &TaskHandler{Store: store}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = "/api/v1/tasks"
+		r.Method = "POST"
+		handler.ServeHTTP(w, r)
+	}))
+	defer srv.Close()
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+	body := `{"project_id":"p1","title":"Test task","description":"desc","agent_type":"dev","priority":1}`
+	resp, err := http.Post(srv.URL, "application/json", strings.NewReader(body))
+	if err != nil {
+		t.Fatal(err)
 	}
-	var body []interface{}
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("expected JSON array: %v", err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
+		t.Fatalf("expected 201, got %d", resp.StatusCode)
+	}
+	var task map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&task); err != nil {
+		t.Fatal(err)
+	}
+	if task["title"] != "Test task" {
+		t.Fatalf("expected title 'Test task', got %v", task["title"])
+	}
+	if task["status"] != "queued" {
+		t.Fatalf("expected status 'queued', got %v", task["status"])
 	}
 }

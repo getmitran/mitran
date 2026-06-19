@@ -77,6 +77,20 @@ func main() {
 	mux.Handle("/api/v1/settings", &handlers.SettingsHandler{Config: &cfg})
 	mux.Handle("/api/v1/settings/", &handlers.SettingsHandler{Config: &cfg})
 
+	// Cost tracking
+	costHandler := handlers.NewCostHandler()
+	mux.Handle("/api/v1/usage", costHandler)
+	mux.Handle("/api/v1/usage/summary", costHandler)
+
+	// Webhooks
+	webhookHandler := handlers.NewWebhookHandler()
+	mux.Handle("/api/v1/webhooks", webhookHandler)
+	mux.Handle("/api/v1/webhooks/", webhookHandler)
+
+	// Onboarding
+	onboardingHandler := handlers.NewOnboardingHandler()
+	mux.Handle("/api/v1/onboarding", onboardingHandler)
+
 	// Environment & Pipeline handlers (project sub-resources)
 	// These need to be registered BEFORE the catch-all /api/v1/projects/ 
 	// Since Go 1.22 ServeMux doesn't help here with catch-all prefix, 

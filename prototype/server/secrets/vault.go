@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 // SecretStore abstracts secret retrieval and storage.
@@ -14,10 +15,21 @@ type SecretStore interface {
 }
 
 // EnvSecretStore reads secrets from environment variables prefixed with MITRAN_SECRET_.
-type EnvSecretStore struct{}
+// Set() writes to an internal map; Get() checks the map first, then falls back to os.Getenv.
+type EnvSecretStore struct {
+	mu    sync.RWMutex
+	store map[string]string
+}
 
 func (e *EnvSecretStore) Get(key string) (string, error) {
-	v := os.Getenv("MITRAN_SECRET_" + strings.ToUpper(key))
+	envKey := "MITRAN_SECRET_" + strings.ToUpper(key)
+	e.mu.RLock()
+	if v, ok := e.store[envKey]; ok {
+		e.mu.RUnlock()
+		return v, nil
+	}
+	e.mu.RUnlock()
+	v := os.Getenv(envKey)
 	if v == "" {
 		return "", fmt.Errorf("secret %q not found", key)
 	}
@@ -25,7 +37,14 @@ func (e *EnvSecretStore) Get(key string) (string, error) {
 }
 
 func (e *EnvSecretStore) Set(key, value string) error {
-	return os.Setenv("MITRAN_SECRET_"+strings.ToUpper(key), value)
+	envKey := "MITRAN_SECRET_" + strings.ToUpper(key)
+	e.mu.Lock()
+	if e.store == nil {
+		e.store = make(map[string]string)
+	}
+	e.store[envKey] = value
+	e.mu.Unlock()
+	return nil
 }
 
 // FileSecretStore reads secrets from a directory (one file per secret).

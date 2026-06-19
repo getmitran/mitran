@@ -105,3 +105,23 @@ jobs:
         working-directory: prototype/dashboard
       - run: npm run build
         working-directory: prototype/dashboard
+
+  security-scan:
+    needs: [build-go, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan server Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: prototype/server/Dockerfile
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: Scan agent-worker Dockerfile
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: prototype/agent-worker/Dockerfile
+          severity: HIGH,CRITICAL
+          exit-code: "1"

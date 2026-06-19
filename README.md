@@ -45,6 +45,47 @@ Mitran (Sanskrit/Tamil: "friend, ally") is an open-source platform where AI agen
          (Claude)       (user-managed) (Slack/GitHub)
 ```
 
+## Dashboard Preview
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ ☰ Mitran          🔍 Search...              ◉ ravitejb  ⚙ Settings  │
+├──────────┬───────────────────────────────────────────────────────────┤
+│ SIDEBAR  │  Dashboard                                                │
+│          │  ┌─────────────┬─────────────┬─────────────┐             │
+│ ◉ Home   │  │ Tasks: 12   │ Agents: 8/8 │ Uptime: 99% │             │
+│ ◉ Agents │  └─────────────┴─────────────┴─────────────┘             │
+│ ◉ Tasks  │                                                           │
+│ ◉ Kanban │  ┌─ Kanban ──────────────────────────────────┐           │
+│ ◉ Chat   │  │ TODO │ IN PROGRESS │ REVIEW │ DONE        │           │
+│ ◉ Memory │  │ ━━━━ │ ━━━━━━━━━━━ │ ━━━━━━ │ ━━━━        │           │
+│ ◉ Crons  │  │ ▪▪▪  │ ▪▪          │ ▪      │ ▪▪▪▪▪       │           │
+│ ◉ Wiki   │  └──────────────────────────────────────────┘           │
+│ ◉ CI/CD  │                                                           │
+│ ◉ Monitor│  ┌─ Agent Activity ──────────────────────────┐           │
+│ ◉ HR     │  │  ▁▂▃▅▇█▇▅▃▂▁  CPU    ▂▃▅▃▂▁  Memory     │           │
+│ ◉ Review │  │  Dev ✓  Ops ✓  Tickets ✓  Wiki ●          │           │
+│ ◉ Logs   │  └──────────────────────────────────────────┘           │
+│ ◉ Settings│                                                          │
+│ ◉ Artifacts│                                                         │
+│ ◉ MCP    │                                                           │
+│ ◉ Slack  │                                                           │
+│ ◉ GitHub │                                                           │
+└──────────┴───────────────────────────────────────────────────────────┘
+```
+
+**Visible features:**
+
+- **Sidebar navigation** — 20+ pages: Home, Agents, Tasks, Kanban, Chat, Memory, Crons, Wiki, CI/CD, Monitor, HR Portal, Review, Logs, Settings, Artifacts, MCP Registry, Slack, GitHub, Sessions, Config Editor
+- **Real-time task queue** — Live WebSocket updates showing active/queued/completed tasks across all agents
+- **Kanban board** — Drag-and-drop columns (TODO, In Progress, Review, Done) with task cards, priority badges, and assignee avatars
+- **Chat interface** — Natural language interaction with any agent, streaming responses, markdown rendering
+- **Agent status panel** — All 8 agents (Dev, Docs, Ops, Review, HR, CI/CD, Tickets, Wiki) with health indicators and activity sparklines
+- **Monitoring graphs** — Prometheus-backed CPU, memory, request latency, and error rate charts via Chart.js
+- **HR Portal** — Leave management, org chart, onboarding workflows, attendance, payroll, and performance review modules
+- **Memory viewer** — Browse and search persistent agent memory (semantic + episodic)
+- **Cron manager** — Schedule, pause, trigger, and monitor recurring agent jobs
+
 ## Quick Start (Docker Compose)
 
 ```bash
