@@ -1,4 +1,5 @@
 import { ListOrdered, Bot, ShieldCheck, Ticket, BookOpen, Zap, LayoutGrid, Settings, MessageSquare, History, FolderOpen, GitBranch, Puzzle, AppWindow, Link2, Webhook, DollarSign, Rocket, FileSearch, Users, CalendarDays } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 const nav = [
   { id: 'queue', label: 'Queue', icon: ListOrdered },
@@ -60,8 +61,9 @@ export default function Sidebar({ active, onNavigate, onInit }: Props) {
           </button>
         ))}
       </nav>
-      <div className="px-5 py-4 border-t border-gray-800 text-[11px] text-gray-600">
-        v0.1.0 • prototype
+      <div className="px-5 py-4 border-t border-gray-800 flex items-center justify-between">
+        <span className="text-[11px] text-gray-600">v0.1.0</span>
+        <ThemeToggle />
       </div>
     </aside>
   )
