@@ -229,6 +229,9 @@ func NewStore(dir string) (*Store, error) {
 	return &Store{db: d, dir: dir}, nil
 }
 
+// DB returns the underlying sql.DB for use by other packages
+func (s *Store) DB() *sql.DB { return s.db }
+
 func (s *Store) path() string {
 	return filepath.Join(s.dir, "mitran.db")
 }
