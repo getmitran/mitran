@@ -36,11 +36,16 @@ Testing principles:
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         languages = context.get("languages", ["Python"])
         source_files = context.get("source_code", "")
         lang_str = ", ".join(languages) if isinstance(languages, list) else languages
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Languages: {lang_str}
 Source code to test:
 {source_files if source_files else 'No source provided - generate tests based on task description'}
@@ -54,6 +59,9 @@ Generate comprehensive test files."""
 
         summary = f"## Tester Agent Output\n\nGenerated {len(files)} test files"
         summary += f"\n\n### Test Files\n" + "\n".join(f"- `{f.path}`" for f in files)
+
+        # Save episode
+        self._save_episode(project_id, f"Tester: {task_description} -> generated {len(files)} test files")
 
         return AgentResult(summary=summary, files=files)
 

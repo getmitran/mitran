@@ -48,10 +48,15 @@ Always provide:
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         source_code = context.get("source_code", "")
         dependencies = context.get("dependencies", "")
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Source code to scan:
 {source_code if source_code else 'No source provided'}
 
@@ -69,5 +74,8 @@ Perform a thorough security analysis and report findings."""
             action="create",
             content=response
         )]
+
+        # Save episode
+        self._save_episode(project_id, f"Security: {task_description} -> scan complete")
 
         return AgentResult(summary=response, files=files)

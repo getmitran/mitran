@@ -32,10 +32,15 @@ Be constructive and specific - include line references and code suggestions."""
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         code_context = context.get("code_diff", "")
         file_list = context.get("files_changed", [])
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Files changed: {', '.join(file_list) if file_list else 'N/A'}
 Code context:
 {code_context if code_context else 'No diff provided'}
@@ -53,5 +58,8 @@ Provide a thorough architectural review and recommendations."""
                 action="create",
                 content=response
             ))
+
+        # Save episode
+        self._save_episode(project_id, f"Architect: {task_description} -> review complete")
 
         return AgentResult(summary=response, files=files)

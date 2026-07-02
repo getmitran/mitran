@@ -37,10 +37,15 @@ Principles:
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         source_code = context.get("source_code", "")
         existing_docs = context.get("existing_docs", "")
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Source code:
 {source_code if source_code else 'No source provided'}
 
@@ -59,6 +64,9 @@ Generate or update documentation files."""
 
         summary = f"## Documentation Agent Output\n\nGenerated {len(files)} doc files"
         summary += f"\n\n### Files\n" + "\n".join(f"- `{f.path}`" for f in files)
+
+        # Save episode
+        self._save_episode(project_id, f"Docs: {task_description} -> generated {len(files)} doc files")
 
         return AgentResult(summary=summary, files=files)
 

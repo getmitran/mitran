@@ -37,10 +37,15 @@ Always consider: rollback plans, blast radius, and monitoring gaps."""
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         environment = context.get("environment", "production")
         logs = context.get("error_logs", "")
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Environment: {environment}
 Error context:
 {logs if logs else 'No logs provided'}
@@ -53,6 +58,9 @@ Provide analysis and/or infrastructure code as needed."""
         files = self._parse_files(response)
 
         summary = response if not files else f"## DevOps Agent Output\n\nGenerated {len(files)} files\n\n### Files\n" + "\n".join(f"- `{f.path}`" for f in files)
+
+        # Save episode
+        self._save_episode(project_id, f"DevOps: {task_description} -> {'generated ' + str(len(files)) + ' files' if files else 'analysis complete'}")
 
         return AgentResult(summary=summary, files=files)
 

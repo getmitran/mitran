@@ -31,10 +31,15 @@ Rules:
 
     def execute(self, task_description: str, context: dict) -> AgentResult:
         project = context.get("project_name", "unknown")
+        project_id = context.get("project_id", "default")
         languages = context.get("languages", ["Python"])
         lang_str = ", ".join(languages) if isinstance(languages, list) else languages
 
-        prompt = f"""Project: {project}
+        # Fetch relevant memories
+        memories = self._fetch_memory(project_id, task_description)
+        memory_context = self._build_memory_context(memories)
+
+        prompt = f"""{memory_context}Project: {project}
 Languages: {lang_str}
 Task: {task_description}
 
@@ -45,6 +50,9 @@ Generate production-quality code files to complete this task."""
 
         summary = f"## Developer Agent Output\n\nGenerated {len(files)} files"
         summary += f"\n\n### Files\n" + "\n".join(f"- `{f.path}`" for f in files)
+
+        # Save episode
+        self._save_episode(project_id, f"Developer: {task_description} -> generated {len(files)} files")
 
         return AgentResult(summary=summary, files=files)
 

@@ -1,6 +1,14 @@
 import json
+import logging
 from dataclasses import dataclass, field
+from urllib.request import urlopen, Request
+from urllib.parse import quote
+from urllib.error import URLError
 from worker.llm import invoke
+
+_log = logging.getLogger(__name__)
+
+MITRAN_API_BASE = "http://localhost:7780"
 
 
 @dataclass
@@ -26,6 +34,42 @@ class BaseAgent:
 
     def _call_llm(self, prompt: str) -> str:
         return invoke(self.system_prompt, prompt)
+
+    def _fetch_memory(self, project_id: str, query: str) -> list:
+        """Fetch relevant memories from the memory system."""
+        try:
+            url = f"{MITRAN_API_BASE}/api/v1/projects/{quote(project_id, safe='')}/memory/search?q={quote(query)}&limit=5"
+            req = Request(url, method="GET")
+            req.add_header("Content-Type", "application/json")
+            with urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode())
+                return data if isinstance(data, list) else data.get("results", [])
+        except (URLError, json.JSONDecodeError, OSError) as e:
+            _log.debug(f"Memory fetch failed (non-fatal): {e}")
+            return []
+
+    def _save_episode(self, project_id: str, summary: str) -> None:
+        """Save an episode to the memory system after task completion."""
+        try:
+            url = f"{MITRAN_API_BASE}/api/v1/projects/{quote(project_id, safe='')}/memory/episodes"
+            payload = json.dumps({"content": summary, "agent": self.agent_type}).encode()
+            req = Request(url, data=payload, method="POST")
+            req.add_header("Content-Type", "application/json")
+            with urlopen(req, timeout=5) as resp:
+                resp.read()
+        except (URLError, OSError) as e:
+            _log.debug(f"Episode save failed (non-fatal): {e}")
+
+    def _build_memory_context(self, memories: list) -> str:
+        """Format memories into a prompt-friendly string."""
+        if not memories:
+            return ""
+        lines = ["Relevant context from memory:"]
+        for m in memories[:5]:
+            content = m.get("content", "") if isinstance(m, dict) else str(m)
+            if content:
+                lines.append(f"- {content}")
+        return "\n".join(lines) + "\n\n"
 
 
 SYSTEM_PROMPT = """You are Mitran's Dev Agent — a senior software engineer that generates production-ready project scaffolding.
