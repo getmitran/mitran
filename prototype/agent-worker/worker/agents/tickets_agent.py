@@ -32,7 +32,7 @@ class TicketsAgent:
     agent_type = "project_management"
 
     def execute(self, task: str, context: dict) -> AgentResult:
-        user_msg = f"Project: {context.get('company_description', 'Software project')}\nStack: {context.get('tech_stack', 'Python')}\nTeam size: {context.get('team_size', 5)}\n\nTask: {task}"
+        user_msg = f"Project: {context.get('team_description', 'Software project')}\nStack: {context.get('tech_stack', 'Python')}\nTeam size: {context.get('team_size', 5)}\n\nTask: {task}"
         raw = invoke(SYSTEM_PROMPT, user_msg)
         try:
             data = json.loads(raw)

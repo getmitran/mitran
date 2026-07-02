@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Mitran API
-  description: Mitran agent-native company infrastructure platform REST API
+  description: Mitran agent-native team infrastructure platform REST API
   version: 0.1.0
   license:
     name: AGPL-3.0

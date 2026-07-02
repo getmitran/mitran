@@ -65,7 +65,7 @@ def dev_agent_context():
         "project_name": "test-project",
         "languages": ["Python"],
         "workspace_path": "/tmp/test-workspace",
-        "company_description": "Test company",
+        "team_description": "Test team",
         "tech_stack": "Python",
         "team_size": 5,
     }

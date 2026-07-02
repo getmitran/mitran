@@ -1,13 +1,13 @@
 # Mitran — Vision & Strategy
 
 ## One-Liner
-"Describe your company → Mitran sets up everything in 30 minutes."
+"Describe your team → Mitran sets up everything in 30 minutes."
 
 ## The Problem
-Every growing company needs internal infrastructure: CI/CD pipelines, documentation, ticketing, monitoring, wikis, HR portals. Today this requires 5-15 engineers spending months building, maintaining, and patching these systems. Most startups can't afford this. Most enterprises waste millions on it.
+Every growing team needs internal infrastructure: CI/CD pipelines, documentation, ticketing, monitoring, wikis, HR portals. Today this requires 5-15 engineers spending months building, maintaining, and patching these systems. Most startups can't afford this. Most enterprises waste millions on it.
 
 ## The Solution
-Mitran is an open-source platform where AI agents build and maintain your entire internal infrastructure. You describe what your company does — agents set up your dev pipeline, docs site, ticketing system, monitoring, wiki, and HR portal. Humans control priority, approve deployments, and steer direction. Agents do all the work.
+Mitran is an open-source platform where AI agents build and maintain your entire internal infrastructure. You describe what your team does — agents set up your dev pipeline, docs site, ticketing system, monitoring, wiki, and HR portal. Humans control priority, approve deployments, and steer direction. Agents do all the work.
 
 ## Core Principles
 1. **Human decides, agents execute** — Sync execution, human checkpoints, priority queue
@@ -43,7 +43,7 @@ Mitran is an open-source platform where AI agents build and maintain your entire
 |------|-------|----------|
 | **Community (AGPL)** | Free | Full platform, all agents, self-hosted, local apps |
 | **Enterprise** | $5K-50K/year | Managed hosting, SSO/SAML, audit logs, SLA support, custom agent training |
-| **Consulting** | $10K-100K/project | "We set up Mitran for your company" — onboarding + customization |
+| **Consulting** | $10K-100K/project | "We set up Mitran for your team" — onboarding + customization |
 
 ## Team (Phase 1: 5 people)
 1. Founder/CEO — Product, strategy, sales, fundraising
@@ -64,7 +64,7 @@ Scale to 10 after: 3K GitHub stars + 3 enterprise design partners.
 
 ## Killer Demo (GTM Hook)
 User runs: `mitran init`
-- "What does your company do?" → "We build a mobile fitness app"
+- "What does your team do?" → "We build a mobile fitness app"
 - "How many engineers?" → "8"
 - "What languages?" → "TypeScript, React Native, Go backend"
 

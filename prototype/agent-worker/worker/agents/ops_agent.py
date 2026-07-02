@@ -33,7 +33,7 @@ class OpsAgent:
     agent_type = "operations"
 
     def execute(self, task: str, context: dict) -> AgentResult:
-        user_msg = f"Project: {context.get('company_description', 'Software project')}\nStack: {context.get('tech_stack', 'Python')}\nService name: {context.get('service_name', 'app')}\n\nTask: {task}"
+        user_msg = f"Project: {context.get('team_description', 'Software project')}\nStack: {context.get('tech_stack', 'Python')}\nService name: {context.get('service_name', 'app')}\n\nTask: {task}"
         raw = invoke(SYSTEM_PROMPT, user_msg)
         try:
             data = json.loads(raw)

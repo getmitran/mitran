@@ -28,6 +28,6 @@ export const api = {
     request('/settings', { method: 'PUT', body: JSON.stringify(settings) }),
   chat: (message: string, agent: string) =>
     request<any>('/chat', { method: 'POST', body: JSON.stringify({ message, agent }) }),
-  triggerInit: (config: { company_name: string; description: string; languages: string[]; team_size: number }) =>
+  triggerInit: (config: { team_name: string; description: string; languages: string[]; team_size: number }) =>
     request('/init', { method: 'POST', body: JSON.stringify(config) }),
 }

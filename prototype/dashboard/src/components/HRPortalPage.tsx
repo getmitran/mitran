@@ -6,7 +6,7 @@ const modules = [
   { icon: '🚀', title: 'Onboarding', desc: 'New hire workflows and checklists', path: '/hr/onboarding' },
   { icon: '📊', title: 'Performance', desc: 'Reviews, goals, and feedback cycles', path: '/hr/performance' },
   { icon: '🏢', title: 'Org Chart', desc: 'Team structure and reporting lines', path: '/hr/org-chart' },
-  { icon: '📢', title: 'Announcements', desc: 'Company-wide news and updates', path: '/hr/announcements' },
+  { icon: '📢', title: 'Announcements', desc: 'Team-wide news and updates', path: '/hr/announcements' },
   { icon: '⏰', title: 'Attendance', desc: 'Timesheets and clock-in records', path: '/hr/attendance' },
   { icon: '💰', title: 'Payroll', desc: 'Salary, payslips, and deductions', path: '/hr/payroll' },
   { icon: '🎯', title: 'Recruitment', desc: 'Job postings and candidate pipeline', path: '/hr/recruitment' },

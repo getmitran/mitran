@@ -241,7 +241,7 @@
 | 111 | HR Portal dashboard page | Full React page: employee directory, PTO calendar, onboarding tracker, policy library. | P1 |
 | 112 | PTO request system | Submit requests with date picker, type selection, auto-calculate balance, manager approval workflow. | P1 |
 | 113 | Onboarding checklists | Template-based flows. Assign to new hire. Track completion. Auto-create tasks in ticketing. | P1 |
-| 114 | Policy library | CRUD for company policies (markdown). Versioned. Searchable. HR agent uses as context. | P2 |
+| 114 | Policy library | CRUD for team policies (markdown). Versioned. Searchable. HR agent uses as context. | P2 |
 | 115 | Employee directory | Team members with role, department, start date, manager. Org chart view. | P2 |
 | 116 | PTO balance tracking | Per-employee accrual, usage history, remaining balance. Year-end rollover rules. | P2 |
 

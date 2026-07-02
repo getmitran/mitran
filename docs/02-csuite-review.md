@@ -2,7 +2,7 @@
 
 ## 🎬 The Idea (Summary)
 
-Mitran is an open-source (AGPL) platform that provides a company's entire internal infrastructure — built and maintained by AI agents. The platform ships with opinionated default agents (Dev, Docs, Ops, HR, Tickets, CI/CD, Wiki, Observability) and supports a marketplace for community apps. Humans control priority, assign work, and approve outputs. Agents execute synchronously (one at a time per resource) with human checkpoints.
+Mitran is an open-source (AGPL) platform that provides a team's entire internal infrastructure — built and maintained by AI agents. The platform ships with opinionated default agents (Dev, Docs, Ops, HR, Tickets, CI/CD, Wiki, Observability) and supports a marketplace for community apps. Humans control priority, assign work, and approve outputs. Agents execute synchronously (one at a time per resource) with human checkpoints.
 
 **Business model:** Open-source self-hosted + Enterprise tier (managed hosting, SSO/SAML, audit logs, custom agent training, SLA-backed support).
 
@@ -13,7 +13,7 @@ Mitran is an open-source (AGPL) platform that provides a company's entire intern
 ## 👨‍💼 CEO Review (Strategy & Market)
 
 ### What I Like
-1. **Massive TAM** — Every company with >10 employees needs internal tools. $200B+ market (Atlassian $60B, ServiceNow $150B, GitLab $15B combined).
+1. **Massive TAM** — Every team with >10 employees needs internal tools. $200B+ market (Atlassian $60B, ServiceNow $150B, GitLab $15B combined).
 2. **Timing is perfect** — LLMs crossed the reliability threshold for internal (non-customer-facing) work in 2025-2026.
 3. **Open-source moat** — Community contributions create network effects. Once 100+ community agents exist in the marketplace, switching cost is enormous.
 4. **Cost disruption** — A 50-person engineering team costs $8-15M/year. Mitran + 3-5 humans could replace the internal tooling portion for $200K/year.
@@ -121,7 +121,7 @@ Mitran is an open-source (AGPL) platform that provides a company's entire intern
 1. **The AI reliability problem is unsolved.** Current LLMs hallucinate. When your Dev Agent writes a bug that passes code review (by Review Agent, also an LLM), who catches it? Humans can't review everything — that defeats the purpose. You're selling "autonomous infrastructure" but delivering "semi-autonomous with heavy human supervision."
    - *Counter:* That's why sync execution + human checkpoints exist. But then you're just a fancy task runner, not autonomous infrastructure.
 
-2. **You're competing with every company simultaneously.** Jira (tickets), Confluence (wiki), GitHub Actions (CI/CD), PagerDuty (observability), BambooHR (HR). Each of these has 100+ engineers. You have 10 people building ALL of them? Even if agents do the work, you need integrations with existing systems during transition.
+2. **You're competing with every team simultaneously.** Jira (tickets), Confluence (wiki), GitHub Actions (CI/CD), PagerDuty (observability), BambooHR (HR). Each of these has 100+ engineers. You have 10 people building ALL of them? Even if agents do the work, you need integrations with existing systems during transition.
 
 3. **Open-source agent platforms are a commodity.** CrewAI, LangGraph, AutoGen, Temporal — all free, all have momentum. What's Mitran's 10x differentiator? "Sync execution with human priority queue" is a feature, not a platform.
 
@@ -134,7 +134,7 @@ Mitran is an open-source (AGPL) platform that provides a company's entire intern
 
 ### Critic Fix
 - **Find ONE killer use case** that no competitor solves. Not "everything" — one thing, perfectly.
-  - Suggestion: **"Zero-to-deployed in 30 minutes."** User describes their company in plain English → Mitran sets up their entire dev pipeline (repo, CI/CD, monitoring, docs site) automatically. That's a demo that sells itself.
+  - Suggestion: **"Zero-to-deployed in 30 minutes."** User describes their team in plain English → Mitran sets up their entire dev pipeline (repo, CI/CD, monitoring, docs site) automatically. That's a demo that sells itself.
 - **Build the "WordPress moment"** — the one-click install that makes people tweet about it.
 - **Don't compete with Jira/Confluence.** Integrate with them. Agents that USE existing tools are more adoptable than agents that REPLACE them.
 
@@ -147,7 +147,7 @@ Mitran is an open-source (AGPL) platform that provides a company's entire intern
 | Scope too large | Phase MVP: Platform + Dev + Docs + Ops agents only. Others in Phase 2. |
 | No security isolation | Add path-scoped permissions per agent (not full sandboxing) |
 | Team too large for pre-revenue | Start 5, scale to 10 after 3K stars + 3 design partners |
-| No day-1 revenue | Add consulting arm: "We'll set up Mitran for your company" |
+| No day-1 revenue | Add consulting arm: "We'll set up Mitran for your team" |
 | Undifferentiated | Lead with "zero-to-deployed in 30 min" killer demo |
 | Marketplace too early | Local apps only in Phase 1. Marketplace in Phase 2 with quality gates. |
 | Enterprise trust gap | Integrate with existing tools (GitHub, Jira, Slack) rather than replacing them |
@@ -158,7 +158,7 @@ Mitran is an open-source (AGPL) platform that provides a company's entire intern
 ## Final Positioning After Review
 
 **Before (too broad):**
-> "AI agents run your entire company infrastructure"
+> "AI agents run your entire team infrastructure"
 
 **After (focused, sellable):**
 > "Set up your dev team's entire toolchain in 30 minutes — AI agents build and maintain your CI/CD, docs, and monitoring while you focus on product."

@@ -1,6 +1,6 @@
 # Mitran
 
-> Agent-native company infrastructure platform. Your AI team runs dev, ops, tickets, wiki, and more — so humans focus on decisions.
+> Agent-native team infrastructure platform. Your AI team runs dev, ops, tickets, wiki, and more — so humans focus on decisions.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://go.dev)
@@ -8,7 +8,7 @@
 
 ## What is Mitran?
 
-Mitran (Sanskrit/Tamil: "friend, ally") is an open-source platform where AI agents handle your company's internal tooling — development workflows, operations, ticketing, documentation, and CI/CD — as a coordinated team. You describe your company, run `mitran init`, and get a fully operational agent workforce in 30 minutes.
+Mitran (Sanskrit/Tamil: "friend, ally") is an open-source platform where AI agents handle your team's internal tooling — development workflows, operations, ticketing, documentation, and CI/CD — as a coordinated team. You describe your team, run `mitran init`, and get a fully operational agent workforce in 30 minutes.
 
 ## Features
 

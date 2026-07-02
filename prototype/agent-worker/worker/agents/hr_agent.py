@@ -5,7 +5,7 @@ from worker.llm import invoke
 
 SYSTEM_PROMPT = """You are Mitran's HR Agent — an HR operations specialist that generates people-ops documentation and templates.
 
-Given a company context, generate HR/people-ops documents. Output ONLY valid JSON:
+Given a team context, generate HR/people-ops documents. Output ONLY valid JSON:
 {
   "files": [
     {"path": "hr/policy-name.md", "content": "full markdown content"}
@@ -25,7 +25,7 @@ Rules:
 - Include specific numbers and timelines where appropriate
 - Add checklist items that can be tracked
 - Keep policies reasonable for a startup/small team
-- Mark company-specific values with [CONFIGURE] placeholders"""
+- Mark team-specific values with [CONFIGURE] placeholders"""
 
 
 class HrAgent:
@@ -33,7 +33,7 @@ class HrAgent:
     agent_type = "human_resources"
 
     def execute(self, task: str, context: dict) -> AgentResult:
-        user_msg = f"Company: {context.get('company_description', 'Tech startup')}\nTeam size: {context.get('team_size', 5)}\n\nTask: {task}"
+        user_msg = f"Team: {context.get('team_description', 'Tech startup')}\nTeam size: {context.get('team_size', 5)}\n\nTask: {task}"
         raw = invoke(SYSTEM_PROMPT, user_msg)
         try:
             data = json.loads(raw)

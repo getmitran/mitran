@@ -40,7 +40,7 @@ var defaultTasks = []OnboardingTask{
 	{"t2", "Create email account", "Provision corporate email", "it", "it-team", true, 1},
 	{"t3", "Setup code access", "Grant repo and CI/CD permissions", "it", "it-team", true, 2},
 	{"t4", "Sign NDA", "Review and sign non-disclosure agreement", "compliance", "hr-team", true, 1},
-	{"t5", "Sign code of conduct", "Acknowledge company policies", "compliance", "hr-team", true, 2},
+	{"t5", "Sign code of conduct", "Acknowledge team policies", "compliance", "hr-team", true, 2},
 	{"t6", "Complete security training", "Mandatory infosec awareness course", "compliance", "hr-team", true, 5},
 	{"t7", "Meet your manager", "Intro call with direct manager", "team", "manager", true, 2},
 	{"t8", "Meet the team", "Team lunch or virtual meet-and-greet", "team", "manager", false, 5},

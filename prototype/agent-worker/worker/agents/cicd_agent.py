@@ -38,7 +38,7 @@ class CicdAgent:
     def execute(self, task: str, context: dict) -> AgentResult:
         envs = context.get("environments", ["dev", "staging", "prod"])
         user_msg = (
-            f"Project: {context.get('company_description', 'Software project')}\n"
+            f"Project: {context.get('team_description', 'Software project')}\n"
             f"Stack: {context.get('tech_stack', 'Python')}\n"
             f"Environments: {', '.join(envs)}\n"
             f"CI system: {context.get('ci_system', 'GitHub Actions')}\n\n"

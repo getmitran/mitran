@@ -31,7 +31,7 @@
 |------|---------|-------------|-----------------|-------------|
 | 5 | GitHub integration (OAuth, repo creation, PR API) | Docs Agent v0.1, CI/CD Agent v0.1 | Agent status panel, progress bars | Landing page live, waitlist form |
 | 6 | Slack integration (bot, slash commands, notifications) | Slack tool for agents, GitHub tool for agents | Slack notification for checkpoints | First blog post: "What we're building" |
-| 7 | `mitran init` flow (interactive company description) | Orchestrator logic: plan tasks from company description | Init wizard UI in dashboard | Community Discord/Slack setup |
+| 7 | `mitran init` flow (interactive team description) | Orchestrator logic: plan tasks from team description | Init wizard UI in dashboard | Community Discord/Slack setup |
 | 8 | Event bus (NATS embedded), webhook handler | Refine all 3 agents based on testing | Event feed in dashboard | Reach out to 10 potential design partners |
 
 **Deliverable:** `mitran init` generates a basic plan, 3 agents execute it, Slack notifications work.

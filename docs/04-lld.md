@@ -568,7 +568,7 @@ mitran setup
 # → Workspace path
 
 mitran init
-# → Interactive company description
+# → Interactive team description
 # → Generates full infrastructure
 ```
 

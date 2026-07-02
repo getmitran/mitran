@@ -123,7 +123,7 @@ OpenClaw is NOT a separate product — it's a **module within Mitran** that powe
 
 ### 4.1 How MCP Servers Work in Mitran
 
-When a company sets up Mitran, they configure which MCP servers are available — similar to writing `mcp.json` for Kiro/Cline, but managed via the Mitran Settings UI.
+When a team sets up Mitran, they configure which MCP servers are available — similar to writing `mcp.json` for Kiro/Cline, but managed via the Mitran Settings UI.
 
 ```json
 // .mitran/mcp-config.json (equivalent to mcp.json)
@@ -166,7 +166,7 @@ When a company sets up Mitran, they configure which MCP servers are available �
       "command": "python",
       "args": ["./mcp-servers/internal-api/server.py"],
       "env": {
-        "API_BASE_URL": "https://api.company.internal",
+        "API_BASE_URL": "https://api.team.internal",
         "API_KEY": "${INTERNAL_API_KEY}"
       }
     }

@@ -33,7 +33,7 @@ result = crew.kickoff()
 | Developer builds agents in code | Agents ship ready-to-use |
 | No integrations | GitHub, Slack, Grafana built-in |
 
-**Lesson for Mitran:** CrewAI proved demand (50K stars). But it's a developer tool, not a company tool. Mitran is what you build AFTER outgrowing CrewAI.
+**Lesson for Mitran:** CrewAI proved demand (50K stars). But it's a developer tool, not a team tool. Mitran is what you build AFTER outgrowing CrewAI.
 
 ---
 
@@ -60,7 +60,7 @@ Human: Reviews PR, merges or rejects
 | Single agent (one software engineer) | 8 specialized agents |
 | Full VM isolation (~2GB/task) | Path ACLs (lightweight) |
 | Async execution (no checkpoints mid-task) | Sync with human checkpoints |
-| One product: code generation | Full company infrastructure |
+| One product: code generation | Full team infrastructure |
 | Closed source, SaaS only | Open source, self-hosted |
 | $500/month per seat | Free (enterprise tier for extras) |
 | No ticketing/wiki/HR/monitoring | All included |
@@ -146,7 +146,7 @@ func MyWorkflow(ctx workflow.Context) error {
 | No LLM integration | LLM is the core of every agent |
 | No UI for task management | Full dashboard with priority queue |
 | Steep learning curve | `mitran init` → running in 30 min |
-| Infrastructure for developers | Tool for entire company |
+| Infrastructure for developers | Tool for entire team |
 
 **Lesson for Mitran:** Temporal proved Go is right for durable orchestration. Their workflow-as-code pattern is what Mitran's DAG engine should feel like internally. But Temporal requires developers to build everything — Mitran ships the building blocks ready.
 
@@ -201,7 +201,7 @@ func MyWorkflow(ctx workflow.Context) error {
 ## Positioning Summary
 
 ```
-                    Full Company Platform
+                    Full Team Platform
                            ▲
                            │
          Atlassian ●       │      ● MITRAN
@@ -219,4 +219,4 @@ func MyWorkflow(ctx workflow.Context) error {
                      Single Purpose
 ```
 
-Mitran occupies the **top-right quadrant** — full company platform + product (not framework). Nobody else is here.
+Mitran occupies the **top-right quadrant** — full team platform + product (not framework). Nobody else is here.

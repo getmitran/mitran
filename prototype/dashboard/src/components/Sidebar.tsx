@@ -54,7 +54,7 @@ export default function Sidebar({ active, onNavigate, onInit }: Props) {
       <div className="px-4 py-3 border-b border-gray-800">
         <button onClick={onInit}
           className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent/80 text-black font-medium text-xs py-2 rounded-md transition-colors">
-          <Zap size={14} /> Init Company
+          <Zap size={14} /> Init Team
         </button>
       </div>
       <nav className="flex-1 py-2 overflow-y-auto">

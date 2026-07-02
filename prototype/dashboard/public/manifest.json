@@ -1,7 +1,7 @@
 {
   "name": "Mitran",
   "short_name": "Mitran",
-  "description": "Agent-native company infrastructure",
+  "description": "Agent-native team infrastructure",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#06b6d4",

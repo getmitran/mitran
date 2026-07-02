@@ -32,7 +32,7 @@ class DashboardAgent:
     agent_type = "observability"
 
     def execute(self, task: str, context: dict) -> AgentResult:
-        user_msg = f"Service: {context.get('company_description', 'Web service')}\nStack: {context.get('tech_stack', 'Python')}\n\nTask: {task}"
+        user_msg = f"Service: {context.get('team_description', 'Web service')}\nStack: {context.get('tech_stack', 'Python')}\n\nTask: {task}"
         raw = invoke(SYSTEM_PROMPT, user_msg)
         try:
             data = json.loads(raw)

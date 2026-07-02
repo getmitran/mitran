@@ -4,13 +4,13 @@
 **Mitran**
 *Your agents build. You decide.*
 
-Open-source platform where AI agents build and maintain your entire company infrastructure.
+Open-source platform where AI agents build and maintain your entire team infrastructure.
 
 ---
 
 ## Slide 2: The Problem
 
-Every company with 10+ people needs:
+Every team with 10+ people needs:
 - CI/CD pipelines → 2-4 engineers, 3 months
 - Documentation → 1 engineer part-time, forever behind
 - Ticketing system → Buy Jira ($50K+/year) or build custom
@@ -26,11 +26,11 @@ Most startups can't afford this. Most enterprises waste millions on it.
 
 ## Slide 3: The Solution
 
-**Mitran: Describe your company → Everything is set up in 30 minutes.**
+**Mitran: Describe your team → Everything is set up in 30 minutes.**
 
 ```
 $ mitran init
-"What does your company do?" → "Mobile fitness app, 8 engineers, TS + Go"
+"What does your team do?" → "Mobile fitness app, 8 engineers, TS + Go"
 
 ✓ GitHub repos with branch protection     [2 min]
 ✓ CI/CD pipelines (lint, test, deploy)     [5 min]
@@ -83,7 +83,7 @@ HUMAN (decides)          MITRAN (executes)
 |------|-------|--------|
 | **Community** | Free (AGPL) | Startups, solo devs, open-source projects |
 | **Enterprise** | $5K-50K/year | Teams 20+, need SSO, audit, SLA |
-| **Consulting** | $10K-100K/project | "We set up Mitran for your company" |
+| **Consulting** | $10K-100K/project | "We set up Mitran for your team" |
 
 **Revenue ramp:**
 - Months 0-8: $0 (building + community)
@@ -175,7 +175,7 @@ HUMAN (decides)          MITRAN (executes)
 
 **Year 1:** Open-source platform adopted by startups
 **Year 3:** Enterprise companies replace internal tooling teams with Mitran
-**Year 5:** "Agent-native company" becomes a category — Mitran is the default platform
-**Year 10:** Every company under 500 people runs entirely on Mitran
+**Year 5:** "Agent-native team" becomes a category — Mitran is the default platform
+**Year 10:** Every team under 500 people runs entirely on Mitran
 
-> "In 2015, every company needed a DevOps team. In 2030, every company needs a Mitran instance."
+> "In 2015, every team needed a DevOps team. In 2030, every team needs a Mitran instance."

@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">mitran</h1>
   <p align="center"><strong>Your agents build. You decide.</strong></p>
-  <p align="center">Open-source platform where AI agents build and maintain your entire company infrastructure.</p>
+  <p align="center">Open-source platform where AI agents build and maintain your entire team infrastructure.</p>
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 
 ## What is Mitran?
 
-Run `mitran init`, describe your company, and in **30 minutes** get:
+Run `mitran init`, describe your team, and in **30 minutes** get:
 
 - ⚙️ **CI/CD pipelines** — GitHub Actions, configured and running
 - 📝 **Documentation** — API docs, architecture docs, runbooks

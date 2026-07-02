@@ -163,7 +163,7 @@ my-agent/
 User: mitran init
   │
   ▼
-Mitran: "What does your company do?"
+Mitran: "What does your team do?"
 User: "Mobile fitness app, 8 engineers, TypeScript + Go"
   │
   ▼
