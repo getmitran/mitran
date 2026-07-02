@@ -1,0 +1,198 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mitran-config
+  namespace: default
+data:
+  MITRAN_ENGINE_PORT: "7780"
+  MITRAN_WORKER_PORT: "8888"
+  MITRAN_LLM_PROVIDER: "bedrock"
+  MITRAN_MEMORY_BACKEND: "sqlite"
+  MITRAN_LOG_LEVEL: "info"
+  AWS_REGION: "us-east-1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-engine
+  labels:
+    app: mitran
+    component: engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitran
+      component: engine
+  template:
+    metadata:
+      labels:
+        app: mitran
+        component: engine
+    spec:
+      containers:
+      - name: engine
+        image: ghcr.io/getmitran/mitran-engine:latest
+        ports:
+        - containerPort: 7780
+          name: http
+        envFrom:
+        - configMapRef:
+            name: mitran-config
+        env:
+        - name: MITRAN_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mitran-secrets
+              key: jwt-secret
+        - name: MITRAN_SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: mitran-secrets
+              key: session-secret
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 7780
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 7780
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-engine
+spec:
+  selector:
+    app: mitran
+    component: engine
+  ports:
+  - port: 7780
+    targetPort: 7780
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-worker
+  labels:
+    app: mitran
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mitran
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: mitran
+        component: worker
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/getmitran/mitran-worker:latest
+        ports:
+        - containerPort: 8888
+          name: grpc
+        envFrom:
+        - configMapRef:
+            name: mitran-config
+        env:
+        - name: MITRAN_ENGINE_URL
+          value: "http://mitran-engine:7780"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: mitran-secrets
+              key: aws-access-key-id
+              optional: true
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mitran-secrets
+              key: aws-secret-access-key
+              optional: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-worker
+spec:
+  selector:
+    app: mitran
+    component: worker
+  ports:
+  - port: 8888
+    targetPort: 8888
+    name: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitran-dashboard
+  labels:
+    app: mitran
+    component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitran
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: mitran
+        component: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: ghcr.io/getmitran/mitran-dashboard:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: VITE_API_URL
+          value: "http://mitran-engine:7780"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitran-dashboard
+spec:
+  type: LoadBalancer
+  selector:
+    app: mitran
+    component: dashboard
+  ports:
+  - port: 80
+    targetPort: 3000
+    name: http

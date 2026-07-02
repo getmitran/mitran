@@ -10,6 +10,7 @@ func runMigrations(db *sql.DB) error {
 		description TEXT,
 		languages TEXT,
 		team_size INTEGER,
+		team_id TEXT,
 		created_at TEXT
 	);
 	CREATE TABLE IF NOT EXISTS tasks (
@@ -23,6 +24,7 @@ func runMigrations(db *sql.DB) error {
 		depends_on TEXT,
 		resources TEXT,
 		created_by TEXT,
+		team_id TEXT,
 		created_at TEXT,
 		started_at TEXT,
 		completed_at TEXT,
@@ -47,6 +49,7 @@ func runMigrations(db *sql.DB) error {
 		type TEXT,
 		status TEXT,
 		callback_url TEXT,
+		team_id TEXT,
 		last_heartbeat TEXT,
 		created_at TEXT
 	);
@@ -130,5 +133,21 @@ func runMigrations(db *sql.DB) error {
 		value TEXT
 	);
 	`)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Multi-tenancy migration: add team_id to existing tables
+	// SQLite doesn't support ADD COLUMN IF NOT EXISTS, so we use pragma to check
+	alterStatements := []string{
+		"ALTER TABLE tasks ADD COLUMN team_id TEXT",
+		"ALTER TABLE projects ADD COLUMN team_id TEXT",
+		"ALTER TABLE agents ADD COLUMN team_id TEXT",
+	}
+	for _, stmt := range alterStatements {
+		// Ignore "duplicate column" errors for idempotency
+		_, _ = db.Exec(stmt)
+	}
+
+	return nil
 }

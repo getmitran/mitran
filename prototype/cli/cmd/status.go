@@ -42,7 +42,7 @@ func init() {
 }
 
 func runStatus(cmd *cobra.Command, args []string) {
-	base := fmt.Sprintf("http://localhost:%d", enginePort)
+	base := engineBase()
 
 	health, err := fetchJSON[HealthResponse](base + "/health")
 	if err != nil {

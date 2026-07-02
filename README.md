@@ -1,6 +1,6 @@
 # Mitran
 
-> Agent-native team infrastructure platform. Your AI team runs dev, ops, tickets, wiki, and more — so humans focus on decisions.
+> Agent-native team infrastructure. AI agents run your dev, ops, and docs — humans focus on decisions.
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg)](https://go.dev)
@@ -8,147 +8,92 @@
 
 ## What is Mitran?
 
-Mitran (Sanskrit/Tamil: "friend, ally") is an open-source platform where AI agents handle your team's internal tooling — development workflows, operations, ticketing, documentation, and CI/CD — as a coordinated team. You describe your team, run `mitran init`, and get a fully operational agent workforce in 30 minutes.
+Mitran (Sanskrit/Tamil: "friend") is an open-source platform where AI agents operate as your team's internal tooling layer — development, operations, testing, documentation, and project management — coordinated by a PM orchestrator. Run `mitran init --team` and get a working agent workforce in 30 minutes.
 
-## Features
+## Agents
 
-- **5 Core Agents** — Dev, Ops, Tickets, Wiki, HR (with CI/CD, Review, and Chat agents)
-- **OpenClaw Runtime** — Persistent memory, scheduled jobs, subagent orchestration, self-learning
-- **MCP Support** — Connect any Model Context Protocol server for extensible tool use
-- **Multi-LLM** — AWS Bedrock (Claude), OpenAI, Anthropic, local models via configurable providers
-- **DAG Engine** — Topological task scheduling with dependency resolution and parallel execution
-- **gRPC IPC** — Go orchestrator ↔ Python workers communicate via Protocol Buffers
-- **React Dashboard** — Real-time WebSocket updates, Kanban boards, agent status, chat interface
-- **Self-Hosted First** — AGPL-3.0, runs on your infrastructure, no data leaves your network
+**7 Primary Agents** (PM orchestrator + 6 specialists):
+
+| Agent | Role |
+|-------|------|
+| **PM** | Orchestrates tasks, assigns work, tracks progress |
+| **Developer** | Writes code, creates PRs, manages branches |
+| **Architect** | System design, ADRs, dependency analysis |
+| **DevOps** | CI/CD, deployments, infrastructure, monitoring |
+| **Tester** | Unit/integration/E2E tests, coverage analysis |
+| **Docs** | Documentation, changelogs, API references |
+| **Security** | Vulnerability scanning, policy enforcement, audits |
+
+Plus 9 legacy agents (Dev, Ops, Tickets, Wiki, HR, CI/CD, Review, Chat, Support) for backward compatibility.
+
+## Key Features
+
+- **Memory** — Persistent facts, lessons, and episodic recall per project
+- **Crons** — Scheduled agent jobs with 5-field cron expressions and intervals
+- **Artifacts** — Versioned content store (50-version retention, slug-based)
+- **DAG Engine** — Topological task scheduling with parallel execution
+- **MCP Support** — Connect any Model Context Protocol server
+- **Multi-LLM** — Bedrock, OpenAI, Anthropic, Ollama (local)
+- **gRPC IPC** — Go orchestrator ↔ Python workers via protobuf
+- **React Dashboard** — Real-time WebSocket, Kanban, chat, monitoring
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│           React Dashboard (Dev :5173 | Docker :3000)     │
-│              WebSocket + REST API Consumer               │
-└───────────────────────────┬─────────────────────────────┘
-                            │ HTTP/WS
-┌───────────────────────────▼─────────────────────────────┐
-│                   Go Engine (:7780)                      │
-│  REST API · DAG Scheduler · Memory · Auth · WebSocket   │
-└───────────────────────────┬─────────────────────────────┘
-                            │ gRPC (protobuf)
-┌───────────────────────────▼─────────────────────────────┐
-│              Python Agent Workers (:8888)                │
-│  8 Agents · LLM Orchestration · MCP Client · Tools      │
-└───────────────────────────┬─────────────────────────────┘
-                            │
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-         AWS Bedrock    MCP Servers    Integrations
-         (Claude)       (user-managed) (Slack/GitHub)
+┌───────────────────────────────────────────────────┐
+│         React Dashboard (:5173)                   │
+│         WebSocket + REST Consumer                 │
+└────────────────────┬──────────────────────────────┘
+                     │ HTTP/WS
+┌────────────────────▼──────────────────────────────┐
+│              Go Engine (:7780)                     │
+│  REST API · DAG · Memory · Crons · Artifacts      │
+│  Auth · WebSocket · PM Orchestrator               │
+└────────────────────┬──────────────────────────────┘
+                     │ gRPC
+┌────────────────────▼──────────────────────────────┐
+│          Python Agent Workers (:8888)             │
+│  7 Primary + 9 Legacy Agents · LLM · MCP · Tools │
+└────────────────────┬──────────────────────────────┘
+                     │
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+    AWS Bedrock   MCP Servers  Integrations
+    (Claude)      (extensible) (Slack/GitHub)
 ```
 
-## Dashboard Preview
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ ☰ Mitran          🔍 Search...              ◉ ravitejb  ⚙ Settings  │
-├──────────┬───────────────────────────────────────────────────────────┤
-│ SIDEBAR  │  Dashboard                                                │
-│          │  ┌─────────────┬─────────────┬─────────────┐             │
-│ ◉ Home   │  │ Tasks: 12   │ Agents: 8/8 │ Uptime: 99% │             │
-│ ◉ Agents │  └─────────────┴─────────────┴─────────────┘             │
-│ ◉ Tasks  │                                                           │
-│ ◉ Kanban │  ┌─ Kanban ──────────────────────────────────┐           │
-│ ◉ Chat   │  │ TODO │ IN PROGRESS │ REVIEW │ DONE        │           │
-│ ◉ Memory │  │ ━━━━ │ ━━━━━━━━━━━ │ ━━━━━━ │ ━━━━        │           │
-│ ◉ Crons  │  │ ▪▪▪  │ ▪▪          │ ▪      │ ▪▪▪▪▪       │           │
-│ ◉ Wiki   │  └──────────────────────────────────────────┘           │
-│ ◉ CI/CD  │                                                           │
-│ ◉ Monitor│  ┌─ Agent Activity ──────────────────────────┐           │
-│ ◉ HR     │  │  ▁▂▃▅▇█▇▅▃▂▁  CPU    ▂▃▅▃▂▁  Memory     │           │
-│ ◉ Review │  │  Dev ✓  Ops ✓  Tickets ✓  Wiki ●          │           │
-│ ◉ Logs   │  └──────────────────────────────────────────┘           │
-│ ◉ Settings│                                                          │
-│ ◉ Artifacts│                                                         │
-│ ◉ MCP    │                                                           │
-│ ◉ Slack  │                                                           │
-│ ◉ GitHub │                                                           │
-└──────────┴───────────────────────────────────────────────────────────┘
-```
-
-**Visible features:**
-
-- **Sidebar navigation** — 20+ pages: Home, Agents, Tasks, Kanban, Chat, Memory, Crons, Wiki, CI/CD, Monitor, HR Portal, Review, Logs, Settings, Artifacts, MCP Registry, Slack, GitHub, Sessions, Config Editor
-- **Real-time task queue** — Live WebSocket updates showing active/queued/completed tasks across all agents
-- **Kanban board** — Drag-and-drop columns (TODO, In Progress, Review, Done) with task cards, priority badges, and assignee avatars
-- **Chat interface** — Natural language interaction with any agent, streaming responses, markdown rendering
-- **Agent status panel** — All 8 agents (Dev, Docs, Ops, Review, HR, CI/CD, Tickets, Wiki) with health indicators and activity sparklines
-- **Monitoring graphs** — Prometheus-backed CPU, memory, request latency, and error rate charts via Chart.js
-- **HR Portal** — Leave management, org chart, onboarding workflows, attendance, payroll, and performance review modules
-- **Memory viewer** — Browse and search persistent agent memory (semantic + episodic)
-- **Cron manager** — Schedule, pause, trigger, and monitor recurring agent jobs
-
-## Quick Start (Docker Compose)
+## Quick Start
 
 ```bash
-git clone https://github.com/getmitran/mitran.git
-cd mitran
-cp .env.example .env  # Add your LLM API keys
+git clone https://github.com/getmitran/mitran.git && cd mitran
+cp .env.example .env   # Add your LLM API keys
 docker compose up
 ```
 
-Dashboard: http://localhost:5173 · API: http://localhost:7780 · Agents: http://localhost:8888
+Dashboard: http://localhost:5173 · API: http://localhost:7780
 
-> Dev: http://localhost:5173 | Docker: http://localhost:5173
-
-## Manual Setup
-
-### Prerequisites
-
-- Go 1.22+
-- Python 3.11+
-- Node.js 18+
-- protoc (Protocol Buffers compiler)
-
-### Install & Run
+### Init Team Flow
 
 ```bash
-# 1. Engine (Go)
-cd prototype/server
-go mod download
-go run main.go
-
-# 2. Agent Workers (Python)
-cd prototype/agent-worker
-pip install -r requirements.txt
-python -m worker.main
-
-# 3. Dashboard (React)
-cd prototype/dashboard
-npm install
-npm run dev
+mitran init --team "Acme Corp" --size 5
+# → Provisions all 7 agents with project context
+# → Creates .mitran/ workspace with memory, cron configs
+# → Ready in ~30 minutes
 ```
 
-## CLI Usage
+## CLI
 
 ```bash
-# Initialize a new project
-mitran init --name "Acme Corp"
-
-# Start all services
-mitran up
-
-# Check agent status
-mitran status
-
-# Run a task
-mitran run "Set up CI/CD for the payments service"
-
-# View logs
-mitran logs --agent dev
+mitran init --team "Name"     # Initialize agent team
+mitran up                      # Start all services
+mitran status                  # Agent health + task queue
+mitran run "task description"  # Dispatch to PM orchestrator
+mitran logs --agent developer  # Stream agent logs
+mitran cron list               # View scheduled jobs
+mitran memory search "query"   # Search agent memory
 ```
 
 ## Configuration
-
-Environment variables (`.env`):
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -156,35 +101,43 @@ Environment variables (`.env`):
 | `MITRAN_WORKER_PORT` | Python worker port | `8888` |
 | `MITRAN_LLM_PROVIDER` | LLM backend | `bedrock` |
 | `AWS_REGION` | AWS region for Bedrock | `us-east-1` |
-| `MITRAN_MEMORY_BACKEND` | Storage backend | `json` |
+| `MITRAN_MEMORY_BACKEND` | Storage (json/sqlite) | `sqlite` |
 | `MITRAN_LOG_LEVEL` | Log verbosity | `info` |
-
-Per-project settings live in `.mitran/projects/<id>/settings.json`.
 
 ## Project Structure
 
 ```
 prototype/
-├── server/          # Go engine (REST, DAG, memory, auth)
+├── server/          # Go engine (API, DAG, memory, crons, artifacts, auth)
 ├── agent-worker/    # Python agents (LLM, MCP, tools)
 ├── dashboard/       # React + Vite + Tailwind
 ├── proto/           # gRPC/protobuf definitions
 ├── cli/             # Go CLI binary
-└── agents/          # Agent configurations
-docs/                # Architecture, design, sprint plans
-docker-compose.yml   # Full stack deployment
-Makefile             # Build shortcuts
+└── agents/          # Agent configurations (7 primary + 9 legacy)
+deploy/
+├── k8s/             # Kubernetes manifests
+├── helm/            # Helm chart
+└── terraform/       # Infrastructure as code
+docs/                # Architecture, design, roadmap
+```
+
+## Deployment
+
+```bash
+# Kubernetes
+kubectl apply -f deploy/k8s/
+
+# Docker Compose (production)
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and PR guidelines.
-
-We welcome contributions of all kinds — bug fixes, new agents, integrations, docs, and tests.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and PR guidelines.
 
 ## License
 
-[AGPL-3.0](LICENSE) — Free to use, modify, and self-host. Enterprise licensing available for managed hosting and custom SLA.
+[AGPL-3.0](LICENSE) — Free to use, modify, and self-host.
 
 ---
 

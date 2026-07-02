@@ -10,6 +10,20 @@ assignees: ''
 
 A clear and concise description of the bug.
 
+## Agent Involved
+
+Which agent(s) does this affect?
+- [ ] PM (Orchestrator)
+- [ ] Developer
+- [ ] Architect
+- [ ] DevOps
+- [ ] Tester
+- [ ] Docs
+- [ ] Security
+- [ ] Engine/Core
+- [ ] Dashboard
+- [ ] CLI
+
 ## Steps to Reproduce
 
 1. 
@@ -28,13 +42,15 @@ What actually happened.
 
 - **OS:** 
 - **Go version:** 
+- **Python version:** 
 - **Docker version:** 
 - **Mitran version:** 
+- **LLM Provider:** 
 
 ## Logs
 
 ```
-Paste relevant logs here
+Paste relevant logs here (mitran logs --agent <name>)
 ```
 
 ## Additional Context

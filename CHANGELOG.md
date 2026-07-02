@@ -1,32 +1,58 @@
 # Changelog
 
-All notable changes to Mitran will be documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.0] - 2026-06-18
+## [0.2.0] - 2026-07-02
 
 ### Added
-- Go core engine with DAG scheduler, gRPC IPC, and WebSocket real-time updates
-- Python agent worker with 5 agent types (Dev, Docs, Ops, Review, CI/CD) on AWS Bedrock
-- React + Vite + Tailwind dashboard with 12 pages (Kanban, Memory, Crons, Artifacts, Settings, etc.)
-- OpenClaw autonomous runtime (memory, crons, subagents, MCP orchestration)
-- CLI with 10 commands (`init`, `start`, `stop`, `status`, `agent`, `task`, `config`, `env`, `logs`, `version`)
-- 12 HRMS modules (employees, leave, attendance, payroll, recruitment, onboarding, offboarding, training, performance, analytics, org chart, documents)
-- Slack slash commands, GitHub webhook ingestion, Prometheus /metrics endpoint
-- Grafana provisioning with pre-built dashboards and alerting rules
-- Docker Compose and Helm chart for deployment
-- GitHub Actions CI pipeline with lint, test, and build stages
-- 180 tasks completed across platform, agents, integrations, enterprise, and DevRel
+- **7 Primary Agents** — Developer, Architect, DevOps, Tester, PM, Docs, Security (replacing generic 5-agent model)
+- **PM Orchestrator** — Central task routing with intelligent agent assignment
+- **Memory System** — Persistent facts, lessons, and episodic recall with LIKE-based search per project
+- **Cron Scheduler** — Recurring and one-shot jobs with 5-field cron expressions and interval support
+- **Artifacts Store** — Versioned content storage with slug-based identity (50-version retention)
+- **`mitran init --team`** — One-command team provisioning with project context setup
+- **SQLite persistence** — 13-table schema replacing JSON file store (via modernc.org/sqlite, pure Go)
+- **SSE real-time log streaming** — `/api/v1/events` endpoint wired to dispatcher
+- **v0.2.0 Roadmap** — 6-phase, 12-week plan covering agent intelligence through community launch
+- Kubernetes deployment manifests with ConfigMap-based configuration
+- CHANGELOG.md, improved issue templates, community documentation
 
-### Security
-- HMAC session cookies with 24h TTL and MITRAN_SESSION_SECRET
-- Tamper-proof audit log with HMAC integrity verification
-- Role-based access control (RBAC) with per-module permissions
-- Per-tenant rate limiting with configurable thresholds
-- OIDC/SSO support for enterprise authentication
-- Circuit breaker on external LLM calls (Bedrock, Ollama fallback)
+### Changed
+- Agent architecture from 5 generic to 7 focused specialists (legacy agents preserved)
+- Brand scope from "company platform" to "team infrastructure" (init team, not init company)
+- Dashboard theme to MeshClaw Solarized with dark/light toggle
+- Memory backend default from `json` to `sqlite`
 
 ### Fixed
-- 28 review findings resolved: 3 build-breaking Go import issues, 5 TypeScript type errors, 5 cosmetic issues (naming conflicts, missing imports), and 15 code quality improvements across all modules
+- All P0/P1/P2 issues from V5 senior review (108 http.Error migrations, middleware wiring, rate-limit key spoofing)
+- Dashboard placeholder pages replaced with functional components
+
+## [0.1.0] - 2026-06-19
+
+### Added
+- **Go Engine** — REST API server on port 7780 with DAG task scheduler
+- **Python Agent Workers** — 8 agents (Dev, Docs, Ops, Review, HR, CI/CD, Tickets, Wiki) via gRPC
+- **React Dashboard** — 32 pages with real-time WebSocket, Kanban boards, chat interface
+- **CLI** — `mitran serve`, `chat`, `status`, `config`, `agent`, `workspace`, `cron`, `snapshot`, `app`
+- **OpenClaw Runtime** — Subagent orchestration, MCP client, tool dispatch
+- **Auth** — HMAC session cookies, JWT API auth, 24h TTL
+- **DAG Engine** — Topological sort with cycle detection, parallel TaskGroup execution
+- **Apps Ecosystem** — App manifest spec, installer, registry API, template generator
+- **HR Portal** — 12-module HRMS (leave, org chart, onboarding, attendance, payroll, performance)
+- **Settings API** — Per-project and per-module configuration with path overrides
+- **Docker Compose** — Full stack deployment (engine + worker + dashboard)
+- **CI/CD** — GitHub Actions for lint, test, build, Docker image push
+- **Documentation** — Architecture docs, sprint plans, quickstart tutorial, development SOP
+
+### Infrastructure
+- gRPC/protobuf IPC between Go and Python
+- WebSocket real-time updates for dashboard
+- Gunicorn 4 workers with circuit breaker on Bedrock
+- Per-tenant rate limiting
+- Atomic JSON writes for data safety
+- ASCII startup banner with route table
+
+[0.2.0]: https://github.com/getmitran/mitran/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/getmitran/mitran/releases/tag/v0.1.0
